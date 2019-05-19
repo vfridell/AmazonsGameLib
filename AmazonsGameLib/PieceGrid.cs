@@ -1,4 +1,5 @@
-﻿using System;
+﻿using QuickGraph;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,7 @@ namespace AmazonsGameLib
     /// Define a grid of points with pieces. Each point will have a piece, even if that piece is an open space.
     /// The grid is a square with sides of a given size. 
     /// The square contains a set of x,y coordinate points with the lower left corner (0, 0)
+    /// For convienience, we also keep track of where the Amazons for each player are in separate hashsets
     /// </summary>
     public class PieceGrid
     {
@@ -96,6 +98,23 @@ namespace AmazonsGameLib
                 Point nextPoint = centerPoint + delta;
                 while(!IsOutOfBounds(nextPoint) && 
                     (nextPoint.Equals(ignoreAmazonPoint) || !PointPiecesDict[nextPoint].Impassible))
+                {
+                    returnSet.Add(nextPoint);
+                    nextPoint = nextPoint + delta;
+                }
+            }
+            return returnSet;
+        }
+
+        public ISet<Point> GetNonArrowPointsOutFrom(Point centerPoint)
+        {
+            if (IsOutOfBounds(centerPoint)) throw new ArgumentException($"Center point {centerPoint} is out of grid bounds size {Size}");
+
+            HashSet<Point> returnSet = new HashSet<Point>();
+            foreach (Point delta in centerPoint.GetAdjacentDeltas())
+            {
+                Point nextPoint = centerPoint + delta;
+                while (!IsOutOfBounds(nextPoint) && !(PointPiecesDict[nextPoint] is Arrow) )
                 {
                     returnSet.Add(nextPoint);
                     nextPoint = nextPoint + delta;
