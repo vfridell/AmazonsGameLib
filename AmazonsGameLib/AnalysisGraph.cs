@@ -34,7 +34,8 @@ namespace AmazonsGameLib
                     if (piece is Open || piece is Amazon)
                     {
                         if (!QueenAdjacencyGraph.ContainsVertex(point)) QueenAdjacencyGraph.AddVertex(point);
-                        IEnumerable<UndirectedEdge<Point>> edges = pieceGrid.GetNonArrowPointsOutFrom(point).Select(op => new UndirectedEdge<Point>(point, op));
+                        IEnumerable<UndirectedEdge<Point>> edges = pieceGrid.GetOpenPointsOutFrom(point).Select(op => new UndirectedEdge<Point>(point, op));
+                        //IEnumerable<UndirectedEdge<Point>> edges = pieceGrid.GetNonArrowPointsOutFrom(point).Select(op => new UndirectedEdge<Point>(point, op));
                         foreach(UndirectedEdge<Point> edge in edges)
                         {
                             if (!QueenAdjacencyGraph.ContainsVertex(edge.Target)) QueenAdjacencyGraph.AddVertex(edge.Target);
@@ -62,13 +63,13 @@ namespace AmazonsGameLib
 
                     if (piece is Open || piece is Amazon)
                     {
-                        if (!KingAdjacencyGraph.ContainsVertex(point)) KingAdjacencyGraph.AddVertex(point);
                         foreach(Point adjacentPoint in PointHelpers.GetAdjacentPoints(point))
                         {
                             if (pieceGrid.IsOutOfBounds(adjacentPoint)) continue;
-                            Piece adjacentPiece = pieceGrid.PointPiecesDict[point];
-                            if (adjacentPiece is Open || adjacentPiece is Amazon)
+                            Piece adjacentPiece = pieceGrid.PointPiecesDict[adjacentPoint];
+                            if (adjacentPiece is Open)
                             {
+                                if (!KingAdjacencyGraph.ContainsVertex(point)) KingAdjacencyGraph.AddVertex(point);
                                 if (!KingAdjacencyGraph.ContainsVertex(adjacentPoint)) KingAdjacencyGraph.AddVertex(adjacentPoint);
                                 UndirectedEdge<Point> edge = new UndirectedEdge<Point>(point, adjacentPoint);
                                 if (!KingAdjacencyGraph.ContainsEdge(edge)) KingAdjacencyGraph.AddEdge(edge);
@@ -84,24 +85,10 @@ namespace AmazonsGameLib
             var connectedComponentsAlgorithm = new ConnectedComponentsAlgorithm<Point, UndirectedEdge<Point>>(QueenAdjacencyGraph);
             connectedComponentsAlgorithm.Compute();
 
-            var queenDistancesPlayer1 = new Dictionary<Point, double>();
-            var kingDistancesPlayer1 = new Dictionary<Point, double>();
-            foreach(Point amazonPoint in pieceGrid.Amazon1Points)
-            {
-                var clonedAdjacencyGraph = new UndirectedGraph<Point, UndirectedEdge<Point>>();
-                clonedAdjacencyGraph.AddVerticesAndEdgeRange(QueenAdjacencyGraph.Edges);
-                // remove all the graph vertices for amazons other than the current one
-                clonedAdjacencyGraph.RemoveVertexIf(v => !amazonPoint.Equals(v) && (pieceGrid.Amazon1Points.Contains(v) || pieceGrid.Amazon2Points.Contains(v)));
-                // find the distance to all other points from this amazon
-                var shortestPathAlgorithm = new QuickGraph.Algorithms.ShortestPath.UndirectedDijkstraShortestPathAlgorithm<Point, UndirectedEdge<Point>>(QueenAdjacencyGraph, w => 1d);
-                shortestPathAlgorithm.Compute(amazonPoint);
-                foreach (var kvp in shortestPathAlgorithm.Distances)
-                {
-                    if (!queenDistancesPlayer1.ContainsKey(kvp.Key)) queenDistancesPlayer1.Add(kvp.Key, kvp.Value);
-                    else queenDistancesPlayer1[kvp.Key] = Math.Min(queenDistancesPlayer1[kvp.Key], kvp.Value);
-                }
-            }
-
+            var queenDistancesPlayer1 = BuildDistancesDictionary(pieceGrid, Owner.Player1, QueenAdjacencyGraph);
+            var kingDistancesPlayer1 = BuildDistancesDictionary(pieceGrid, Owner.Player1, KingAdjacencyGraph);
+            var queenDistancesPlayer2 = BuildDistancesDictionary(pieceGrid, Owner.Player2, QueenAdjacencyGraph);
+            var kingDistancesPlayer2 = BuildDistancesDictionary(pieceGrid, Owner.Player2, KingAdjacencyGraph);
 
             /*
             // An articulation point is a node whose removal causes one subgraph to become two
@@ -116,6 +103,32 @@ namespace AmazonsGameLib
                 dfs.Compute(root);
             }
             */
+        }
+
+        private IDictionary<Point, double> BuildDistancesDictionary(PieceGrid pieceGrid, Owner owner, UndirectedGraph<Point, UndirectedEdge<Point>> adjacencyGraph)
+        {
+            var distancesDictionary = new Dictionary<Point, double>();
+            ISet<Point> amazonPoints;
+            if (owner == Owner.Player1) amazonPoints = pieceGrid.Amazon1Points;
+            else amazonPoints = pieceGrid.Amazon2Points;
+            foreach (Point amazonPoint in amazonPoints)
+            {
+                var clonedAdjacencyGraph = new UndirectedGraph<Point, UndirectedEdge<Point>>();
+                clonedAdjacencyGraph.AddVerticesAndEdgeRange(adjacencyGraph.Edges);
+                // remove all the graph vertices for amazons other than the current one
+                clonedAdjacencyGraph.RemoveVertexIf(v => !amazonPoint.Equals(v) && (pieceGrid.Amazon1Points.Contains(v) || pieceGrid.Amazon2Points.Contains(v)));
+                // amazon is trapped?
+                if (!clonedAdjacencyGraph.ContainsVertex(amazonPoint)) continue;
+                // find the distance to all other points from this amazon
+                var shortestPathAlgorithm = new QuickGraph.Algorithms.ShortestPath.UndirectedDijkstraShortestPathAlgorithm<Point, UndirectedEdge<Point>>(clonedAdjacencyGraph, w => 1d);
+                shortestPathAlgorithm.Compute(amazonPoint);
+                foreach (var kvp in shortestPathAlgorithm.Distances)
+                {
+                    if (!distancesDictionary.ContainsKey(kvp.Key)) distancesDictionary.Add(kvp.Key, kvp.Value);
+                    else distancesDictionary[kvp.Key] = Math.Min(distancesDictionary[kvp.Key], kvp.Value);
+                }
+            }
+            return distancesDictionary;
         }
 
     }
