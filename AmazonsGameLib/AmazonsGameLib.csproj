@@ -59,6 +59,7 @@
     <Compile Include="Board.cs" />
     <Compile Include="DisposableAction.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="LocalAdvantage.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="Open.cs" />
     <Compile Include="Piece.cs" />
