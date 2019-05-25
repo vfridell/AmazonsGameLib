@@ -9,26 +9,82 @@ using System.Threading.Tasks;
 
 namespace AmazonsGameLib
 {
+    /// <summary>
+    /// This analysis class for The Game of Amazons is based on:
+    /// J. Lieberum, An evaluation function for the game of amazons, Theoretical Computer Science 349 (2005) 230 – 244
+    /// </summary>
     public class AnalysisGraph
     {
+        /// <summary>
+        /// An undirected graph representing queen moves between points on the PieceGrid
+        /// </summary>
         public UndirectedGraph<Point, UndirectedEdge<Point>> QueenAdjacencyGraph = new UndirectedGraph<Point, UndirectedEdge<Point>>();
+        /// <summary>
+        /// An undirected graph representing king moves between points on the PieceGrid
+        /// </summary>
         public UndirectedGraph<Point, UndirectedEdge<Point>> KingAdjacencyGraph = new UndirectedGraph<Point, UndirectedEdge<Point>>();
+        /// <summary>
+        /// Each <see cref="Point"/> mapped to a <see cref="LocalAdvantage"/>
+        /// </summary>
         public Dictionary<Point, LocalAdvantage> LocalAdvantages = new Dictionary<Point, LocalAdvantage>();
+        /// <summary>
+        /// Each Point on the grid with an amazon on it mapped to a computed mobility score
+        /// </summary>
         public Dictionary<Point, double> AmazonMobilityScores = new Dictionary<Point, double>();
-
+        /// <summary>
+        /// The set of articulation points on the PieceGrid
+        /// </summary>
         public HashSet<Point> ArticulationPoints = new HashSet<Point>();
+        /// <summary>
+        /// Minimum queen move distances for player 1 at each open, reachable point on the PieceGrid
+        /// </summary>
         public IDictionary<Point, double> Player1QueenMinDistances;
+        /// <summary>
+        /// Minimum king move distances for player 1 at each open, reachable point on the PieceGrid
+        /// </summary>
         public IDictionary<Point, double> Player1KingMinDistances;
+        /// <summary>
+        /// Minimum queen move distances for player 2 at each open, reachable point on the PieceGrid
+        /// </summary>
         public IDictionary<Point, double> Player2QueenMinDistances;
+        /// <summary>
+        /// Minimum king move distances for player 2 at each open, reachable point on the PieceGrid
+        /// </summary>
         public IDictionary<Point, double> Player2KingMinDistances;
-
+        /// <summary>
+        /// Queen move distance for each specific amazon to each other open, reachable point on the PieceGrid
+        /// </summary>
         public IDictionary<Point, IDictionary<Point, double>> SpecificQueenDistances = new Dictionary<Point, IDictionary<Point,double>>();
+        /// <summary>
+        /// King move distance for each specific amazon to each other open, reachable point on the PieceGrid
+        /// </summary>
         public IDictionary<Point, IDictionary<Point, double>> SpecificKingDistances = new Dictionary<Point, IDictionary<Point,double>>();
 
+        /// <summary>
+        /// A weight >= 0 that indicates global competitive reach of breathing space. Will typically decrease each move, will
+        /// definitely decrease from start of game to finish.
+        /// Will be 0 if and only if we reach point of the game where each amazon is enclosed in a separate space
+        /// </summary>
         public double W { get; set; }
+        /// <summary>
+        /// Sum of the local queen move advantages for each player with greater distance differences being rewarded/penalized more
+        /// Positive values indicate advantage for player 1, negative player 2
+        /// </summary>
         public double C1 { get; set; }
+        /// <summary>
+        /// Sum of the local king move advantages for each player with greater distance differences being rewarded/penalized more
+        /// Positive values indicate advantage for player 1, negative player 2
+        /// </summary>
         public double C2 { get; set; }
+        /// <summary>
+        /// Sum of local queen move advantages for each player. Greater distances have no affect on the local score
+        /// Positive values indicate advantage for player 1, negative player 2
+        /// </summary>
         public double T1 { get; set; }
+        /// <summary>
+        /// Sum of local king move advantages for each player. Greater distances have no affect on the local score
+        /// Positive values indicate advantage for player 1, negative player 2
+        /// </summary>
         public double T2 { get; set; }
 
         /// <summary>
@@ -95,6 +151,11 @@ namespace AmazonsGameLib
             }
         }
 
+        /// <summary>
+        /// Build all the internal analysis data for the given PieceGrid
+        /// </summary>
+        /// <param name="pieceGrid">PieceGrid to analyze</param>
+        /// <param name="playerToMove">Player whos turn it is</param>
         public void BuildAnalysis(PieceGrid pieceGrid, Owner playerToMove)
         {
             Player1QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, true, QueenAdjacencyGraph);
@@ -115,6 +176,10 @@ namespace AmazonsGameLib
             T2 = LocalAdvantages.Sum( a => a.Value.DeltaKing );
         }
 
+        /// <summary>
+        /// Calculate the mobility score for all amazons on the PieceGrid
+        /// </summary>
+        /// <param name="pieceGrid">PieceGrid to analyze</param>
         private void CalculateAllAmazonMobility(PieceGrid pieceGrid)
         {
             AmazonMobilityScores.Clear();
@@ -128,6 +193,17 @@ namespace AmazonsGameLib
             }
         }
 
+        /// <summary>
+        /// Calculate the mobility score for a specific amazon point on the PieceGrid.
+        /// </summary>
+        /// <remarks>
+        /// Mobility is based on the breathing space of each space that can be moved to by an 
+        /// amazon at the given point. Closer (king distance) spaces are more valuable than 
+        /// distant ones.
+        /// </remarks>
+        /// <param name="p">Point containing an amazon</param>
+        /// <param name="pieceGrid">PieceGrid to analyze</param>
+        /// <returns></returns>
         private double CalculateAmazonMobility(Point p, PieceGrid pieceGrid)
         {
             var edges = QueenAdjacencyGraph.AdjacentEdges(p);
@@ -140,6 +216,11 @@ namespace AmazonsGameLib
             return mobility;
         }
 
+        /// <summary>
+        /// Build <see cref="LocalAdvantage"/> objects for each open space on the PieceGrid
+        /// </summary>
+        /// <param name="pieceGrid">PieceGrid to analyze</param>
+        /// <param name="playerToMove">Player whos turn it is</param>
         private void CalculateLocalAdvantages(PieceGrid pieceGrid, Owner playerToMove)
         {
             LocalAdvantages.Clear();
@@ -162,6 +243,11 @@ namespace AmazonsGameLib
             }
         }
 
+        /// <summary>
+        /// Find all articulation points on the grid.
+        /// An articulation point is a node whose removal causes one subgraph to become two. In Game of Amazons, this 
+        /// indicates a nearly enclosed space
+        /// </summary>
         private void FindArticulationPoints()
         {
             var connectedComponentsAlgorithm = new ConnectedComponentsAlgorithm<Point, UndirectedEdge<Point>>(KingAdjacencyGraph);
@@ -172,7 +258,6 @@ namespace AmazonsGameLib
             {
                 Point root = c.First().Key;
 
-                // An articulation point is a node whose removal causes one subgraph to become two
                 var articulationPointObserver = new UndirectedArticulationPointObserver<Point, UndirectedEdge<Point>>(ArticulationPoints);
                 var dfs = new UndirectedDepthFirstSearchAlgorithm<Point, UndirectedEdge<Point>>(KingAdjacencyGraph);
 
@@ -183,6 +268,14 @@ namespace AmazonsGameLib
             }
         }
 
+        /// <summary>
+        /// Create a dictionary of points mapped to the minimum distance to that point for the given player and move type
+        /// </summary>
+        /// <param name="pieceGrid">PieceGrid to analyze</param>
+        /// <param name="owner">Player whos amazons we are calculating distance for</param>
+        /// <param name="queen">True for Queen distances, false for King distances</param>
+        /// <param name="adjacencyGraph">The adjacency graph to use for distances. Must match the <paramref name="queen"/> parameter</param>
+        /// <returns>Dictionary of Points with their minimum distance values for the given player and move type</returns>
         private IDictionary<Point, double> BuildDistancesDictionary(PieceGrid pieceGrid, Owner owner, bool queen, UndirectedGraph<Point, UndirectedEdge<Point>> adjacencyGraph)
         {
             var distancesDictionary = new Dictionary<Point, double>();

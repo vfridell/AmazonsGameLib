@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace AmazonsGameLib
 {
+    /// <summary>
+    /// (X, Y) coordinates. Use the static <see cref="Point.Get(int, int)"/> function to get one
+    /// </summary>
     public class Point : IComparable<Point>, IComparable
     {
         protected Point(int x, int y) { X = x; Y = y; }
@@ -59,6 +62,12 @@ namespace AmazonsGameLib
             }
         }
         private static Point[,] _pointSet = new Point[12, 12];
+        /// <summary>
+        /// Get a Point from the pre-defined internal static array
+        /// </summary>
+        /// <param name="x">X value</param>
+        /// <param name="y">Y value</param>
+        /// <returns>The Point object for the given coordinates</returns>
         public static Point Get(int x, int y)
         {
             if (x > 11 || x < -1 || y > 11 || y < -1) throw new ArgumentException($"We only support point x/y values from -1 through 11. You gave {x},{y}");
