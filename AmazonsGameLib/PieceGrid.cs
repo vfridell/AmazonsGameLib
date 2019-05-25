@@ -15,8 +15,15 @@ namespace AmazonsGameLib
     /// </summary>
     public class PieceGrid
     {
+        /// <summary>
+        /// Create a new un-initialized PieceGrid
+        /// </summary>
         public PieceGrid() { }
 
+        /// <summary>
+        /// Create a new un-initialized PieceGrid of a given size
+        /// </summary>
+        /// <param name="size">Size of the square grid</param>
         public PieceGrid(int size)
         {
             Size = size;
@@ -25,6 +32,11 @@ namespace AmazonsGameLib
             Amazon2Points = new HashSet<Point>();
         }
 
+        /// <summary>
+        /// Create a new, empty PieceGrid of a given size and initialize it with a set of amazons
+        /// </summary>
+        /// <param name="size">Size of the square grid</param>
+        /// <param name="playerPieces">(Point, Amazon) dictionary to set up player pieces</param>
         public PieceGrid(int size, IDictionary<Point, Amazon> playerPieces)
         {
             Size = size;
@@ -34,6 +46,11 @@ namespace AmazonsGameLib
             Initialize(playerPieces);
         }
 
+        /// <summary>
+        /// Set up a PieceGrid with a completely defined set of points
+        /// </summary>
+        /// <param name="allPieces">(Point, Piece) dictionary to set up all pieces</param>
+        /// <exception cref="ArgumentException">You must specify all points on the grid in the allPieces dictionary</exception>
         public void Initialize(IDictionary<Point, Piece> allPieces)
         {
             for (int x = 0; x < Size; x++)
@@ -41,6 +58,7 @@ namespace AmazonsGameLib
                 for (int y = 0; y < Size; y++)
                 {
                     Point p = Point.Get(x, y);
+                    if (!allPieces.ContainsKey(p)) throw new ArgumentException("You must specify all points on the grid in the allPieces dictionary");
                     switch(allPieces[p].Name)
                     {
                         case PieceName.Amazon:
@@ -57,6 +75,10 @@ namespace AmazonsGameLib
             }
         }
 
+        /// <summary>
+        /// Set up an empty PieceGrid with amazons at the given points
+        /// </summary>
+        /// <param name="playerPieces">(Point, Amazon) dictionary to set up player pieces</param>
         public void Initialize(IDictionary<Point, Amazon> playerPieces)
         {
             for (int x = 0; x < Size; x++)
@@ -76,18 +98,43 @@ namespace AmazonsGameLib
             }
         }
 
+        /// <summary>
+        /// Size of the square grid
+        /// </summary>
         public readonly int Size;
+        /// <summary>
+        /// All points and pieces on the grid
+        /// </summary>
         public readonly IDictionary<Point, Piece> PointPiecesDict;
+        /// <summary>
+        /// Player 1 amazon positions (points)
+        /// </summary>
         public readonly ISet<Point> Amazon1Points;
+        /// <summary>
+        /// Player 2 amazon positions (points)
+        /// </summary>
         public readonly ISet<Point> Amazon2Points;
 
+        /// <summary>
+        /// Get all the contiguous points on the grid from the given center point out to the first impassible
+        /// point or the edge of the grid. This corresponds to a "queen" move in chess.
+        /// </summary>
+        /// <param name="centerPoint">The origin point to calculate from</param>
+        /// <returns>Set of available points from the center point</returns>
         public ISet<Point> GetOpenPointsOutFrom(Point centerPoint)
         {
             return GetOpenPointsOutFrom(centerPoint, null);
         }
 
-        // for the second part of the move (shooting the arrow) we ignore the amazon that moved
-        // even though it may still be in that spot
+        /// <summary>
+        /// Get all the contiguous points on the grid from the given center point out to the first impassible
+        /// point or the edge of the grid. This corresponds to a "queen" move in chess.
+        /// </summary>
+        /// <param name="centerPoint">The origin point to calculate from</param>
+        /// <param name="ignoreAmazonPoint">A specific point to ignore impassible status on. This is used in the 
+        /// second part of the move (arrow shoot) to ignore the spot the amazon came from</param>
+        /// <returns>Set of available points from the center point</returns>
+        /// <exception cref="ArgumentException">Invalid centerPoint</exception>
         public ISet<Point> GetOpenPointsOutFrom(Point centerPoint, Point ignoreAmazonPoint)
         {
             if (IsOutOfBounds(centerPoint)) throw new ArgumentException($"Center point {centerPoint} is out of grid bounds size {Size}");
@@ -106,23 +153,12 @@ namespace AmazonsGameLib
             return returnSet;
         }
 
-        public ISet<Point> GetNonArrowPointsOutFrom(Point centerPoint)
-        {
-            if (IsOutOfBounds(centerPoint)) throw new ArgumentException($"Center point {centerPoint} is out of grid bounds size {Size}");
 
-            HashSet<Point> returnSet = new HashSet<Point>();
-            foreach (Point delta in centerPoint.GetAdjacentDeltas())
-            {
-                Point nextPoint = centerPoint + delta;
-                while (!IsOutOfBounds(nextPoint) && !(PointPiecesDict[nextPoint] is Arrow) )
-                {
-                    returnSet.Add(nextPoint);
-                    nextPoint = nextPoint + delta;
-                }
-            }
-            return returnSet;
-        }
-
+        /// <summary>
+        /// Get all the available amazon moves (move + shoot) from the given point
+        /// </summary>
+        /// <param name="centerPoint">The point to move from</param>
+        /// <returns>Set of available moves</returns>
         public ISet<Move> GetMovesFromPoint(Point centerPoint)
         {
             HashSet<Move> moves = new HashSet<Move>();
@@ -135,6 +171,11 @@ namespace AmazonsGameLib
             return moves;
         }
 
+        /// <summary>
+        /// Apply a move to the grid
+        /// </summary>
+        /// <param name="move">Move to apply</param>
+        /// <exception cref="ArgumentException">Invalid move</exception>
         public void ApplyMove(Move move)
         {
             Amazon movingPiece = PointPiecesDict[move.Origin] as Amazon;
@@ -156,8 +197,17 @@ namespace AmazonsGameLib
             }
         }
 
+        /// <summary>
+        /// Check if a point is off the grid
+        /// </summary>
+        /// <param name="point">Point to check</param>
+        /// <returns>True if the given point is off the grid, false otherwise</returns>
         public bool IsOutOfBounds(Point point) => point.X < 0 || point.X >= Size || point.Y < 0 || point.Y >= Size;
 
+        /// <summary>
+        /// Make a deep clone of this PieceGrid
+        /// </summary>
+        /// <returns>Cloned PieceGrid</returns>
         public PieceGrid Clone()
         {
             PieceGrid newGrid = new PieceGrid(Size);
