@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace AmazonsGameLib
 {
+    public enum GameResult { Incomplete, Player1Won, Player2Won };
     public class Game
     {
+
         public List<Board> Boards { get; set; } = new List<Board>();
         public ISet<Move> CurrentMoves { get; set; }
         public Player Player1 { get; set; }
@@ -15,6 +17,13 @@ namespace AmazonsGameLib
         public Board CurrentBoard { get; set; }
         public int BoardSize => CurrentBoard.Size;
         public Owner CurrentPlayer => CurrentBoard.CurrentPlayer;
+        public GameResult GetGameResult()
+        {
+            if (!IsComplete()) return GameResult.Incomplete;
+            if (CurrentPlayer == Owner.Player1) return GameResult.Player2Won;
+            else return GameResult.Player1Won;
+        }
+
 
         public void Begin(Player player1, Player player2, int boardSize)
         {

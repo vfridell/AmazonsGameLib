@@ -17,6 +17,8 @@ namespace AmazonsGameLib
         /// The player whos turn it is
         /// </summary>
         public Owner PlayerToMove { get; set; }
+        public bool Player1Reachable => Player1QueenDistance < 100;
+        public bool Player2Reachable => Player2QueenDistance < 100;
         /// <summary>
         /// The minimum number of queen moves for player 1 to reach this point
         /// </summary>

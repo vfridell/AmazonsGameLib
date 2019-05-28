@@ -87,6 +87,49 @@ namespace AmazonsGameLib
         /// </summary>
         public double T2 { get; set; }
 
+        public double T { get; set; }
+
+        public double M { get; set; }
+
+        /*
+        public double IndividualWeightForM(double w, double mobilityScore)
+        {
+            if (w < 0) throw new ArgumentException($"w must be greater than or equal to zero {w}");
+            if (w == 0) return 0d;
+
+        }
+        */
+
+        // T1
+        //http://www.mathopenref.com/graphfunctions.html?fx=(1 - (1 + ((-1)/(1 + 30 * E^(-.2 *x)))))/3&gx=1 + ((-1)/(1 + 30 * E^(-.2 *x)))&xh=70&xl=-0.1&yh=1.1&yl=-0.1&a=1.5&cr=t&cx=26.6979
+        public double F1(double w)
+        {
+            if (w < 0) throw new ArgumentException($"w must be greater than or equal to zero {w}");
+            if (w == 0) return 1d;
+            return 1 + ((-1) / (1 + 30 * Math.Pow(Math.E, -.2 * w)));
+        }
+
+        // T2
+        public double F2(double w)
+        {
+            if (w < 0) throw new ArgumentException($"w must be greater than or equal to zero {w}");
+            double result = (1 - F1(w)) / 3;
+            if (result < 0) return 0;
+            return result;
+        }
+
+        // C1
+        public double F3(double w)
+        {
+            return F2(w);
+        }
+
+        // C2
+        public double F4(double w)
+        {
+            return F2(w);
+        }
+
         /// <summary>
         /// Build an adjacency graph of all open or amazon nodes to represent the current moveable board area
         /// Nodes (points) on the same line are all given edges to each other to represent "queen" moves
@@ -168,12 +211,15 @@ namespace AmazonsGameLib
             CalculateLocalAdvantages(pieceGrid, playerToMove);
             CalculateAllAmazonMobility(pieceGrid);
 
-            W = LocalAdvantages.Where( a => !double.IsInfinity(a.Value.Player1QueenDistance) && !double.IsInfinity(a.Value.Player2QueenDistance) )
-                                                 .Sum( a => Math.Pow(2, -(Math.Abs(a.Value.Player1QueenDistance - a.Value.Player2QueenDistance))) );
+            W = LocalAdvantages.Where( a => a.Value.Player1Reachable && a.Value.Player2Reachable )
+                               .Sum( a => Math.Pow(2, -(Math.Abs(a.Value.Player1QueenDistance - a.Value.Player2QueenDistance))) );
             C1 = 2 * LocalAdvantages.Sum( a => Math.Pow(2, -(a.Value.Player1QueenDistance)) - Math.Pow(2, -(a.Value.Player2QueenDistance)) );
             C2 = LocalAdvantages.Sum( a => Math.Min(1, Math.Max(-1, (a.Value.Player2KingDistance-a.Value.Player1KingDistance) / 6d)) );
             T1 = LocalAdvantages.Sum( a => a.Value.DeltaQueen );
             T2 = LocalAdvantages.Sum( a => a.Value.DeltaKing );
+
+
+            T = (F1(W) * T1) + (F2(W) * C1) + (F3(W) * C2) + (F4(W) * T2);
         }
 
         /// <summary>
@@ -185,11 +231,11 @@ namespace AmazonsGameLib
             AmazonMobilityScores.Clear();
             foreach(Point p in pieceGrid.Amazon1Points)
             {
-                AmazonMobilityScores.Add(p, CalculateAmazonMobility(p, pieceGrid));
+                AmazonMobilityScores.Add(p, CalculateAmazonMobility(p, Owner.Player1, pieceGrid));
             }
             foreach (Point p in pieceGrid.Amazon2Points)
             {
-                AmazonMobilityScores.Add(p, CalculateAmazonMobility(p, pieceGrid));
+                AmazonMobilityScores.Add(p, CalculateAmazonMobility(p, Owner.Player2, pieceGrid));
             }
         }
 
@@ -203,13 +249,21 @@ namespace AmazonsGameLib
         /// </remarks>
         /// <param name="p">Point containing an amazon</param>
         /// <param name="pieceGrid">PieceGrid to analyze</param>
-        /// <returns></returns>
-        private double CalculateAmazonMobility(Point p, PieceGrid pieceGrid)
+        /// <returns>Numeric mobility score, higher numbers = more mobile</returns>
+        private double CalculateAmazonMobility(Point p, Owner owner, PieceGrid pieceGrid)
         {
+            IDictionary<Point, double> minDistancesOppositePlayer;
+            if (owner == Owner.Player1) minDistancesOppositePlayer = Player2QueenMinDistances;
+            else if (owner == Owner.Player2) minDistancesOppositePlayer = Player1QueenMinDistances;
+            else throw new ArgumentException($"Point {p} doesn't have an amazon for either player!");
+
             var edges = QueenAdjacencyGraph.AdjacentEdges(p);
             double mobility = 0d;
             foreach(var edge in edges)
             {
+                if (!minDistancesOppositePlayer.ContainsKey(edge.Target)) continue;
+                if (owner == Owner.Player1 && !LocalAdvantages[edge.Target].Player2Reachable) continue;
+                if (owner == Owner.Player2 && !LocalAdvantages[edge.Target].Player1Reachable) continue;
                 double localMobility = Math.Pow(2, -(SpecificKingDistances[edge.Source][edge.Target])) * QueenAdjacencyGraph.AdjacentDegree(edge.Target);
                 mobility += localMobility;
             }
@@ -227,10 +281,10 @@ namespace AmazonsGameLib
             foreach (var kvp in pieceGrid.PointPiecesDict)
             {
                 if (!(kvp.Value is Open)) continue;
-                if (!Player1QueenMinDistances.TryGetValue(kvp.Key, out double player1QueenDistance)) player1QueenDistance = double.PositiveInfinity;
-                if (!Player2QueenMinDistances.TryGetValue(kvp.Key, out double player2QueenDistance)) player2QueenDistance = double.PositiveInfinity;
-                if (!Player1KingMinDistances.TryGetValue(kvp.Key, out double player1KingDistance)) player1KingDistance = double.PositiveInfinity;
-                if (!Player2KingMinDistances.TryGetValue(kvp.Key, out double player2KingDistance)) player2KingDistance = double.PositiveInfinity;
+                if (!Player1QueenMinDistances.TryGetValue(kvp.Key, out double player1QueenDistance)) player1QueenDistance = 1000d;
+                if (!Player2QueenMinDistances.TryGetValue(kvp.Key, out double player2QueenDistance)) player2QueenDistance = 1000d;
+                if (!Player1KingMinDistances.TryGetValue(kvp.Key, out double player1KingDistance)) player1KingDistance = 1000d;
+                if (!Player2KingMinDistances.TryGetValue(kvp.Key, out double player2KingDistance)) player2KingDistance = 1000d;
                 LocalAdvantage advantageValue = new LocalAdvantage
                 {
                     Player1QueenDistance = player1QueenDistance,

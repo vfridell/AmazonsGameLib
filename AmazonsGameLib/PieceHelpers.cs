@@ -24,10 +24,10 @@ namespace AmazonsGameLib
         {
             { Point.Get(0,3), AmazonPlayer1.Get() },
             { Point.Get(3,0), AmazonPlayer1.Get() },
-            { Point.Get(0,6), AmazonPlayer1.Get() },
+            { Point.Get(6,0), AmazonPlayer1.Get() },
             { Point.Get(9,3), AmazonPlayer1.Get() },
             { Point.Get(9,6), AmazonPlayer2.Get() },
-            { Point.Get(6,0), AmazonPlayer2.Get() },
+            { Point.Get(0,6), AmazonPlayer2.Get() },
             { Point.Get(3,9), AmazonPlayer2.Get() },
             { Point.Get(6,9), AmazonPlayer2.Get() },
         };

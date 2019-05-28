@@ -181,7 +181,7 @@ namespace AmazonsGameLib
             Amazon movingPiece = PointPiecesDict[move.Origin] as Amazon;
             if (movingPiece == null) throw new ArgumentException($"You can only move Amazons. Tried to move {PointPiecesDict[move.Origin].Name}");
             if(PointPiecesDict[move.AmazonsPoint].Name != PieceName.Open) throw new ArgumentException($"You can only move to an open spot. Tried to move to {PointPiecesDict[move.AmazonsPoint].Name}");
-            if(PointPiecesDict[move.ArrowPoint].Name != PieceName.Open) throw new ArgumentException($"You can only shoot to an open spot. Tried to shoot to {PointPiecesDict[move.ArrowPoint].Name}");
+            if(move.ArrowPoint != move.Origin && PointPiecesDict[move.ArrowPoint].Name != PieceName.Open) throw new ArgumentException($"You can only shoot to an open spot. Tried to shoot to {PointPiecesDict[move.ArrowPoint].Name}");
             PointPiecesDict[move.Origin] = Open.Get();
             PointPiecesDict[move.AmazonsPoint] = movingPiece;
             PointPiecesDict[move.ArrowPoint] = movingPiece.GetArrow();
