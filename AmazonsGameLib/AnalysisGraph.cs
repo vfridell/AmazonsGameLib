@@ -91,14 +91,12 @@ namespace AmazonsGameLib
 
         public double M { get; set; }
 
-        /*
         public double IndividualWeightForM(double w, double mobilityScore)
         {
             if (w < 0) throw new ArgumentException($"w must be greater than or equal to zero {w}");
-            if (w == 0) return 0d;
-
+            // z = x / (y + 2)
+            return w / (mobilityScore + 2d);
         }
-        */
 
         // T1
         //http://www.mathopenref.com/graphfunctions.html?fx=(1 - (1 + ((-1)/(1 + 30 * E^(-.2 *x)))))/3&gx=1 + ((-1)/(1 + 30 * E^(-.2 *x)))&xh=70&xl=-0.1&yh=1.1&yl=-0.1&a=1.5&cr=t&cx=26.6979
@@ -220,6 +218,12 @@ namespace AmazonsGameLib
 
 
             T = (F1(W) * T1) + (F2(W) * C1) + (F3(W) * C2) + (F4(W) * T2);
+
+            double player1MobilitySum = AmazonMobilityScores.Where(s => pieceGrid.Amazon1Points.Contains(s.Key))
+                                                            .Sum(s => IndividualWeightForM(W, s.Value));
+            double player2MobilitySum = AmazonMobilityScores.Where(s => pieceGrid.Amazon2Points.Contains(s.Key))
+                                                            .Sum(s => IndividualWeightForM(W, s.Value));
+            M = player2MobilitySum - player1MobilitySum;
         }
 
         /// <summary>

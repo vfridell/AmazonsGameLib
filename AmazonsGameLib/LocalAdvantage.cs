@@ -48,9 +48,10 @@ namespace AmazonsGameLib
         {
             get
             {
+                if (!Player1Reachable && !Player2Reachable) return 0;
                 if (Player1QueenDistance == Player2QueenDistance) return PlayerToMove == Owner.Player1 ? K : -K;
-                else if (Player1QueenDistance > Player2QueenDistance) return 1;
-                else return -1;
+                else if (Player1QueenDistance > Player2QueenDistance) return -1;
+                else return 1;
             }
         }
 

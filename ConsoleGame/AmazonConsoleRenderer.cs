@@ -35,7 +35,9 @@ namespace ConsoleGame
                 if (y == game.BoardSize - 3) Console.Write($" T2: {analysisGraph.T2,5:0.00}");
                 if (y == game.BoardSize - 4) Console.Write($" C1: {analysisGraph.C1,5:0.00}");
                 if (y == game.BoardSize - 5) Console.Write($" C2: {analysisGraph.C2,5:0.00}");
-                if (y == game.BoardSize - 6) Console.Write($" T: {analysisGraph.C2,6:0.00}");
+                if (y == game.BoardSize - 6) Console.Write($" T: {analysisGraph.T,6:0.00}");
+                if (y == game.BoardSize - 7) Console.Write($" M: {analysisGraph.M,6:0.00}");
+                if (y == game.BoardSize - 8) Console.Write($" T+M: {analysisGraph.T + analysisGraph.M,4:0.00}");
 
                 Console.WriteLine();
             }

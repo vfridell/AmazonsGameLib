@@ -11,7 +11,43 @@ namespace ConsoleGame
     {
         static void Main(string[] args)
         {
+            PlayRandomGame();
+        }
 
+        static void ShowMobilityScorePairs()
+        {
+            Game game = new Game();
+            game.Begin(null, null, 10);
+
+            AnalysisGraph analysisGraph = new AnalysisGraph();
+            analysisGraph.InitializeQueenAdjacencyGraph(game.CurrentBoard.PieceGrid);
+            analysisGraph.InitializeKingAdjacencyGraph(game.CurrentBoard.PieceGrid);
+            analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
+
+            foreach (var p in game.CurrentBoard.PieceGrid.Amazon1Points.Union(game.CurrentBoard.PieceGrid.Amazon2Points))
+            {
+                Console.WriteLine($"{analysisGraph.W:0.00},{analysisGraph.AmazonMobilityScores[p]:0.00}");
+            }
+
+            Random rnd = new Random();
+            while (!game.IsComplete())
+            {
+                int randomMoveNum = rnd.Next(0, game.CurrentMoves.Count - 1);
+                game.ApplyMove(game.CurrentMoves.ElementAt(randomMoveNum));
+
+                analysisGraph.InitializeQueenAdjacencyGraph(game.CurrentBoard.PieceGrid);
+                analysisGraph.InitializeKingAdjacencyGraph(game.CurrentBoard.PieceGrid);
+                analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
+
+                foreach (var p in game.CurrentBoard.PieceGrid.Amazon1Points.Union(game.CurrentBoard.PieceGrid.Amazon2Points))
+                {
+                    Console.WriteLine($"{analysisGraph.W:0.00},{analysisGraph.AmazonMobilityScores[p]:0.00}");
+                }
+            }
+        }
+
+        static void PlayRandomGame()
+        {
             Game game = new Game();
             game.Begin(null, null, 10);
 
@@ -23,7 +59,7 @@ namespace ConsoleGame
             AmazonConsoleRenderer.Render(game, analysisGraph);
 
             Random rnd = new Random();
-            while(!game.IsComplete())
+            while (!game.IsComplete())
             {
                 int randomMoveNum = rnd.Next(0, game.CurrentMoves.Count - 1);
                 game.ApplyMove(game.CurrentMoves.ElementAt(randomMoveNum));
