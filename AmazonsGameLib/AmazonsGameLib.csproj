@@ -59,9 +59,13 @@
     <Compile Include="Board.cs" />
     <Compile Include="DisposableAction.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="IAnalysisResult.cs" />
+    <Compile Include="IBoardAnalyzer.cs" />
     <Compile Include="LocalAdvantage.cs" />
     <Compile Include="Move.cs" />
+    <Compile Include="NegamaxContext.cs" />
     <Compile Include="Open.cs" />
+    <Compile Include="OptimusDeep.cs" />
     <Compile Include="Piece.cs" />
     <Compile Include="PieceGrid.cs" />
     <Compile Include="PieceHelpers.cs" />

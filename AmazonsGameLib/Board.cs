@@ -23,25 +23,62 @@ namespace AmazonsGameLib
         public bool IsPlayer1Turn => Player1MoveCount == Player2MoveCount;
         public Owner CurrentPlayer => IsPlayer1Turn ? Owner.Player1 : Owner.Player2;
 
+        /// <summary>
+        /// return false if the board represents a completed game and there is a winner, true otherwise
+        /// </summary>
+        public bool IsPlayable => GetAvailableMovesForCurrentPlayer().Any();
+
+        private Dictionary<Owner, ISet<Move>> _moves { get; set; } = new Dictionary<Owner, ISet<Move>>();
+
         public ISet<Move> GetAvailableMovesForCurrentPlayer() => GetAvailableMoves(CurrentPlayer);
 
         public ISet<Move> GetAvailableMoves(Owner owner = Owner.None)
         {
-            HashSet<Move> results = new HashSet<Move>();
-            IEnumerable<Point> sourceSet;
-            if (owner == Owner.Player1)
-                sourceSet = PieceGrid.Amazon1Points;
-            else if (owner == Owner.Player2)
-                sourceSet = PieceGrid.Amazon2Points;
-            else
-                sourceSet = PieceGrid.Amazon1Points.Union(PieceGrid.Amazon2Points);
+            bool cached = false;
+            if (owner == Owner.None) cached = _moves.ContainsKey(Owner.Player1) && _moves.ContainsKey(Owner.Player2);
+            else cached = _moves.ContainsKey(owner);
 
-            foreach (Point p in sourceSet)
+            if (!cached)
             {
-                results.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                IEnumerable<Point> sourceSet;
+                if (owner == Owner.Player1)
+                {
+                    HashSet<Move> results = new HashSet<Move>();
+                    foreach (Point p in PieceGrid.Amazon1Points)
+                    {
+                        results.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                    }
+                    _moves[owner] = results;
+                }
+                else if (owner == Owner.Player2)
+                {
+                    HashSet<Move> results = new HashSet<Move>();
+                    foreach (Point p in PieceGrid.Amazon2Points)
+                    {
+                        results.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                    }
+                    _moves[owner] = results;
+                }
+                else
+                {
+                    HashSet<Move> results1 = new HashSet<Move>();
+                    HashSet<Move> results2 = new HashSet<Move>();
+                    sourceSet = PieceGrid.Amazon1Points.Union(PieceGrid.Amazon2Points);
+                    foreach (Point p in PieceGrid.Amazon1Points)
+                    {
+                        results1.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                    }
+                    _moves[Owner.Player1] = results1;
+                    foreach (Point p in PieceGrid.Amazon2Points)
+                    {
+                        results2.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                    }
+                    _moves[Owner.Player2] = results2;
+                }
             }
 
-            return results;
+            if (owner == Owner.None) return (ISet<Move>)_moves[Owner.Player1].Union(_moves[Owner.Player2]);
+            else return _moves[owner];
         }
 
         public void ApplyMove(Move move)
@@ -65,6 +102,13 @@ namespace AmazonsGameLib
             newBoard.PieceGrid = PieceGrid.Clone();
             newBoard.Player1MoveCount = Player1MoveCount;
             newBoard.Player2MoveCount = Player2MoveCount;
+            return newBoard;
+        }
+
+        public static Board ComputeFutureBoard(Board board, Move move)
+        {
+            Board newBoard = board.Clone();
+            newBoard.ApplyMove(move);
             return newBoard;
         }
     }

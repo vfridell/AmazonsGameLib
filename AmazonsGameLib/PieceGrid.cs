@@ -15,10 +15,13 @@ namespace AmazonsGameLib
     /// </summary>
     public class PieceGrid
     {
+        private Guid _id;
+        public Guid Id { get => _id; }
+
         /// <summary>
         /// Create a new un-initialized PieceGrid
         /// </summary>
-        public PieceGrid() { }
+        public PieceGrid() { _id = Guid.NewGuid(); }
 
         /// <summary>
         /// Create a new un-initialized PieceGrid of a given size
@@ -26,6 +29,7 @@ namespace AmazonsGameLib
         /// <param name="size">Size of the square grid</param>
         public PieceGrid(int size)
         {
+            _id = Guid.NewGuid();
             Size = size;
             PointPiecesDict = new Dictionary<Point, Piece>();
             Amazon1Points = new HashSet<Point>();
@@ -39,6 +43,7 @@ namespace AmazonsGameLib
         /// <param name="playerPieces">(Point, Amazon) dictionary to set up player pieces</param>
         public PieceGrid(int size, IDictionary<Point, Amazon> playerPieces)
         {
+            _id = Guid.NewGuid();
             Size = size;
             PointPiecesDict = new Dictionary<Point, Piece>();
             Amazon1Points = new HashSet<Point>();
@@ -195,6 +200,7 @@ namespace AmazonsGameLib
                 Amazon2Points.Remove(move.Origin);
                 Amazon2Points.Add(move.AmazonsPoint);
             }
+            _id = Guid.NewGuid();
         }
 
         /// <summary>

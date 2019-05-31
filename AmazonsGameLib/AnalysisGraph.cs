@@ -13,8 +13,10 @@ namespace AmazonsGameLib
     /// This analysis class for The Game of Amazons is based on:
     /// J. Lieberum, An evaluation function for the game of amazons, Theoretical Computer Science 349 (2005) 230 – 244
     /// </summary>
-    public class AnalysisGraph
+    public class AnalysisGraph : IBoardAnalyzer
     {
+        Guid LastAnalyzedPieceGridId { get; set; }
+
         /// <summary>
         /// An undirected graph representing queen moves between points on the PieceGrid
         /// </summary>
@@ -133,7 +135,7 @@ namespace AmazonsGameLib
         /// Nodes (points) on the same line are all given edges to each other to represent "queen" moves
         /// </summary>
         /// <param name="pieceGrid">The PieceGrid to build an adjacency graph from</param>
-        public void InitializeQueenAdjacencyGraph(PieceGrid pieceGrid)
+        private void InitializeQueenAdjacencyGraph(PieceGrid pieceGrid)
         {
             QueenAdjacencyGraph.Clear();
             for (int x = 0; x < pieceGrid.Size; x++)
@@ -163,7 +165,7 @@ namespace AmazonsGameLib
         /// Only points directly adjacent are given edges to each other to represent "king" moves
         /// </summary>
         /// <param name="pieceGrid">The PieceGrid to build an adjacency graph from</param>
-        public void InitializeKingAdjacencyGraph(PieceGrid pieceGrid)
+        private void InitializeKingAdjacencyGraph(PieceGrid pieceGrid)
         {
             KingAdjacencyGraph.Clear();
             for (int x = 0; x < pieceGrid.Size; x++)
@@ -199,12 +201,18 @@ namespace AmazonsGameLib
         /// <param name="playerToMove">Player whos turn it is</param>
         public void BuildAnalysis(PieceGrid pieceGrid, Owner playerToMove)
         {
+            if (pieceGrid.Id == LastAnalyzedPieceGridId) return;
+            LastAnalyzedPieceGridId = pieceGrid.Id;
+
+            InitializeQueenAdjacencyGraph(pieceGrid);
+            InitializeKingAdjacencyGraph(pieceGrid);
+
             Player1QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, true, QueenAdjacencyGraph);
             Player1KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, false, KingAdjacencyGraph);
             Player2QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2, true, QueenAdjacencyGraph);
             Player2KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2, false, KingAdjacencyGraph);
 
-            FindArticulationPoints();
+            //FindArticulationPoints();
 
             CalculateLocalAdvantages(pieceGrid, playerToMove);
             CalculateAllAmazonMobility(pieceGrid);
@@ -372,5 +380,24 @@ namespace AmazonsGameLib
             return distancesDictionary;
         }
 
+        public IAnalysisResult Analyze(Board board)
+        {
+            InitializeQueenAdjacencyGraph(board.PieceGrid);
+            InitializeKingAdjacencyGraph(board.PieceGrid);
+            BuildAnalysis(board.PieceGrid, board.CurrentPlayer);
+
+            var result = new AnalysisGraphResult() { player1Advantage = T + M };
+            if (board.GetAvailableMovesForCurrentPlayer().Count > 0) result.gameResult = GameResult.Incomplete;
+            else if (board.CurrentPlayer == Owner.Player1) result.gameResult = GameResult.Player2Won;
+            else result.gameResult = GameResult.Player1Won;
+            return result;
+        }
+    }
+
+    public class AnalysisGraphResult : IAnalysisResult
+    {
+        public double player1Advantage { get; set; }
+
+        public GameResult gameResult { get; set; }
     }
 }

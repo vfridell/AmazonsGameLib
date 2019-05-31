@@ -8,5 +8,6 @@ namespace AmazonsGameLib
 {
     public class Player
     {
+        public virtual string Name { get; set; }
     }
 }

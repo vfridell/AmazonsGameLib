@@ -19,12 +19,7 @@ namespace UnitTests
             PieceGrid grid = GetPieceGrid();
 
             var analysisGraph = new AnalysisGraph();
-            analysisGraph.InitializeQueenAdjacencyGraph(grid);
-            analysisGraph.InitializeKingAdjacencyGraph(grid);
             analysisGraph.BuildAnalysis(grid, Owner.Player1);
-
-            HashSet<Point> articulationPointsAnswer = new HashSet<Point> { Point.Get(0,6), Point.Get(1,5) };
-            Assert.IsTrue(articulationPointsAnswer.SetEquals(analysisGraph.ArticulationPoints));
 
             foreach (var kvp in player1QueenDistancesAnswer)
             {
@@ -49,17 +44,43 @@ namespace UnitTests
         }
 
         [TestMethod]
+        public void AllFirstMovesAnalyzed()
+        {
+            Game game = new Game();
+            game.Begin(null, null, 10);
+
+            foreach (Move move in game.CurrentMoves)
+            {
+                var analysisGraph = new AnalysisGraph();
+                analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, Owner.Player1);
+            }
+        }
+
         public void ArticulationPoints()
         {
             PieceGrid grid = GetPieceGrid();
 
             var analysisGraph = new AnalysisGraph();
-            analysisGraph.InitializeQueenAdjacencyGraph(grid);
-            analysisGraph.InitializeKingAdjacencyGraph(grid);
             analysisGraph.BuildAnalysis(grid, Owner.Player1);
 
             HashSet<Point> articulationPointsAnswer = new HashSet<Point> { Point.Get(0, 6), Point.Get(1, 5) };
             Assert.IsTrue(articulationPointsAnswer.SetEquals(analysisGraph.ArticulationPoints));
+        }
+
+        [TestMethod]
+        public void EvaluationValues()
+        {
+            PieceGrid grid = GetPieceGrid();
+            var analysisGraph = new AnalysisGraph();
+            analysisGraph.BuildAnalysis(grid, Owner.Player1);
+            Assert.AreEqual("43.38", $"{analysisGraph.W:0.00}");
+            Assert.AreEqual("8.40", $"{analysisGraph.T1:0.00}");
+            Assert.AreEqual("-3.20", $"{analysisGraph.T2:0.00}");
+            Assert.AreEqual("3.88", $"{analysisGraph.C1:0.00}");
+            Assert.AreEqual("1.83", $"{analysisGraph.C2:0.00}");
+            Assert.AreEqual("0.87", $"{analysisGraph.T:0.00}");
+            Assert.AreEqual("19.86", $"{analysisGraph.M:0.00}");
+            Assert.AreEqual("20.73", $"{analysisGraph.T + analysisGraph.M:0.00}");
         }
 
         private PieceGrid GetPieceGrid()

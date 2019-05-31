@@ -11,7 +11,9 @@ namespace ConsoleGame
     {
         static void Main(string[] args)
         {
-            PlayRandomGame();
+            RenderSpecificState();
+            //PlayRandomGame();
+            //PlayRandomVsOptimusDeepGame();
         }
 
         static void ShowMobilityScorePairs()
@@ -20,8 +22,6 @@ namespace ConsoleGame
             game.Begin(null, null, 10);
 
             AnalysisGraph analysisGraph = new AnalysisGraph();
-            analysisGraph.InitializeQueenAdjacencyGraph(game.CurrentBoard.PieceGrid);
-            analysisGraph.InitializeKingAdjacencyGraph(game.CurrentBoard.PieceGrid);
             analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
 
             foreach (var p in game.CurrentBoard.PieceGrid.Amazon1Points.Union(game.CurrentBoard.PieceGrid.Amazon2Points))
@@ -35,8 +35,6 @@ namespace ConsoleGame
                 int randomMoveNum = rnd.Next(0, game.CurrentMoves.Count - 1);
                 game.ApplyMove(game.CurrentMoves.ElementAt(randomMoveNum));
 
-                analysisGraph.InitializeQueenAdjacencyGraph(game.CurrentBoard.PieceGrid);
-                analysisGraph.InitializeKingAdjacencyGraph(game.CurrentBoard.PieceGrid);
                 analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
 
                 foreach (var p in game.CurrentBoard.PieceGrid.Amazon1Points.Union(game.CurrentBoard.PieceGrid.Amazon2Points))
@@ -46,14 +44,45 @@ namespace ConsoleGame
             }
         }
 
+        static void PlayRandomVsOptimusDeepGame()
+        {
+            Game game = new Game();
+            game.Begin(null, null, 10);
+
+            AnalysisGraph analysisGraph = new AnalysisGraph();
+            analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
+
+            AmazonConsoleRenderer.Render(game, analysisGraph);
+            OptimusDeep optimusDeep = new OptimusDeep(3, analysisGraph);
+            optimusDeep.BeginNewGame(Owner.Player2, 10);
+
+            Random rnd = new Random();
+            while (!game.IsComplete())
+            {
+                int randomMoveNum = rnd.Next(0, game.CurrentMoves.Count - 1);
+                game.ApplyMove(game.CurrentMoves.ElementAt(randomMoveNum));
+
+                analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
+
+                AmazonConsoleRenderer.Render(game, analysisGraph);
+
+                if (game.IsComplete()) continue;
+
+                Move bestMove = optimusDeep.PickBestMove(game.CurrentBoard);
+                game.ApplyMove(bestMove);
+
+                analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
+                AmazonConsoleRenderer.Render(game, analysisGraph);
+            }
+            Console.WriteLine(game.GetGameResult().ToString());
+        }
+
         static void PlayRandomGame()
         {
             Game game = new Game();
             game.Begin(null, null, 10);
 
             AnalysisGraph analysisGraph = new AnalysisGraph();
-            analysisGraph.InitializeQueenAdjacencyGraph(game.CurrentBoard.PieceGrid);
-            analysisGraph.InitializeKingAdjacencyGraph(game.CurrentBoard.PieceGrid);
             analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
 
             AmazonConsoleRenderer.Render(game, analysisGraph);
@@ -64,8 +93,6 @@ namespace ConsoleGame
                 int randomMoveNum = rnd.Next(0, game.CurrentMoves.Count - 1);
                 game.ApplyMove(game.CurrentMoves.ElementAt(randomMoveNum));
 
-                analysisGraph.InitializeQueenAdjacencyGraph(game.CurrentBoard.PieceGrid);
-                analysisGraph.InitializeKingAdjacencyGraph(game.CurrentBoard.PieceGrid);
                 analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
 
                 AmazonConsoleRenderer.Render(game, analysisGraph);
@@ -91,8 +118,6 @@ namespace ConsoleGame
             game.CurrentBoard.PieceGrid = grid;
 
             AnalysisGraph analysisGraph = new AnalysisGraph();
-            analysisGraph.InitializeQueenAdjacencyGraph(game.CurrentBoard.PieceGrid);
-            analysisGraph.InitializeKingAdjacencyGraph(game.CurrentBoard.PieceGrid);
             analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);
             AmazonConsoleRenderer.Render(game, analysisGraph);
         }
