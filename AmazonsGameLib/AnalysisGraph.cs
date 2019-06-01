@@ -207,11 +207,10 @@ namespace AmazonsGameLib
             InitializeQueenAdjacencyGraph(pieceGrid);
             InitializeKingAdjacencyGraph(pieceGrid);
 
-            Player1QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, true, QueenAdjacencyGraph);
-            Player1KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, false, KingAdjacencyGraph);
-            Player2QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2, true, QueenAdjacencyGraph);
-            Player2KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2, false, KingAdjacencyGraph);
-
+            Player1QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, true);
+            Player1KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, false);
+            Player2QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2, true);
+            Player2KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2, false);
             //FindArticulationPoints();
 
             CalculateLocalAdvantages(pieceGrid, playerToMove);
@@ -223,7 +222,6 @@ namespace AmazonsGameLib
             C2 = LocalAdvantages.Sum( a => Math.Min(1, Math.Max(-1, (a.Value.Player2KingDistance-a.Value.Player1KingDistance) / 6d)) );
             T1 = LocalAdvantages.Sum( a => a.Value.DeltaQueen );
             T2 = LocalAdvantages.Sum( a => a.Value.DeltaKing );
-
 
             T = (F1(W) * T1) + (F2(W) * C1) + (F3(W) * C2) + (F4(W) * T2);
 
@@ -334,15 +332,67 @@ namespace AmazonsGameLib
             }
         }
 
+        public void FloodFillMinDistancesKing(Point point, PieceGrid pieceGrid, Dictionary<Point, double> result)
+        {
+            ISet<Point> visited = new HashSet<Point>();
+            Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
+            foreach (Point p in point.GetAdjacentPoints().Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
+                                                                       !pieceGrid.PointPiecesDict[adj].Impassible)) toVisit.Enqueue((p, 1));
+
+            while(toVisit.Any())
+            {
+                (Point, double) p = toVisit.Dequeue();
+                if (visited.Contains(p.Item1)) continue;
+                if (result.ContainsKey(p.Item1)) result[p.Item1] = Math.Min(p.Item2, result[p.Item1]);
+                else result.Add(p.Item1, p.Item2);
+                if (!SpecificKingDistances.ContainsKey(point)) SpecificKingDistances.Add(point, new Dictionary<Point, double>());
+                SpecificKingDistances[point].Add(p.Item1, p.Item2);
+                visited.Add(p.Item1);
+                foreach (Point pNext in p.Item1.GetAdjacentPoints()
+                                               .Where(adj => !pieceGrid.IsOutOfBounds(adj) && 
+                                                             !pieceGrid.PointPiecesDict[adj].Impassible &&
+                                                             !visited.Contains(adj)))
+                {
+                    toVisit.Enqueue((pNext, p.Item2 + 1));
+                }
+            }
+        }
+
+        public void FloodFillMinDistancesQueen(Point point, PieceGrid pieceGrid, Dictionary<Point, double> result)
+        {
+            ISet<Point> visited = new HashSet<Point>();
+            Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
+            foreach (Point p in pieceGrid.GetOpenPointsOutFrom(point).Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
+                                                                       !pieceGrid.PointPiecesDict[adj].Impassible)) toVisit.Enqueue((p, 1));
+
+            while (toVisit.Any())
+            {
+                (Point, double) p = toVisit.Dequeue();
+                if (visited.Contains(p.Item1)) continue;
+                if (result.ContainsKey(p.Item1)) result[p.Item1] = Math.Min(p.Item2, result[p.Item1]);
+                else result.Add(p.Item1, p.Item2);
+                if (!SpecificQueenDistances.ContainsKey(point)) SpecificQueenDistances.Add(point, new Dictionary<Point, double>());
+                        SpecificQueenDistances[point].Add(p.Item1, p.Item2);
+                visited.Add(p.Item1);
+                foreach (Point pNext in pieceGrid.GetOpenPointsOutFrom(p.Item1)
+                                               .Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
+                                                             !pieceGrid.PointPiecesDict[adj].Impassible &&
+                                                             !visited.Contains(adj)))
+                {
+                    toVisit.Enqueue((pNext, p.Item2 + 1));
+                }
+            }
+        }
+
         /// <summary>
-        /// Create a dictionary of points mapped to the minimum distance to that point for the given player and move type
+        /// Create a dictionary of points mapped to the minimum distance to that point for the given player and move type.
+        /// As a side effect, this fills the Specific*Distances dictionary for the given <paramref name="owner"/>
         /// </summary>
         /// <param name="pieceGrid">PieceGrid to analyze</param>
         /// <param name="owner">Player whos amazons we are calculating distance for</param>
         /// <param name="queen">True for Queen distances, false for King distances</param>
-        /// <param name="adjacencyGraph">The adjacency graph to use for distances. Must match the <paramref name="queen"/> parameter</param>
         /// <returns>Dictionary of Points with their minimum distance values for the given player and move type</returns>
-        private IDictionary<Point, double> BuildDistancesDictionary(PieceGrid pieceGrid, Owner owner, bool queen, UndirectedGraph<Point, UndirectedEdge<Point>> adjacencyGraph)
+        private IDictionary<Point, double> BuildDistancesDictionary(PieceGrid pieceGrid, Owner owner, bool queen)
         {
             var distancesDictionary = new Dictionary<Point, double>();
             ISet<Point> amazonPoints;
@@ -350,32 +400,12 @@ namespace AmazonsGameLib
             else amazonPoints = pieceGrid.Amazon2Points;
             foreach (Point amazonPoint in amazonPoints)
             {
-                var clonedAdjacencyGraph = new UndirectedGraph<Point, UndirectedEdge<Point>>();
-                clonedAdjacencyGraph.AddVerticesAndEdgeRange(adjacencyGraph.Edges);
-                // remove all the graph vertices for amazons other than the current one
-                clonedAdjacencyGraph.RemoveVertexIf(v => !amazonPoint.Equals(v) && (pieceGrid.Amazon1Points.Contains(v) || pieceGrid.Amazon2Points.Contains(v)));
-                // amazon is trapped?
-                if (!clonedAdjacencyGraph.ContainsVertex(amazonPoint)) continue;
-                // find the distance to all other points from this amazon
-                var shortestPathAlgorithm = new QuickGraph.Algorithms.ShortestPath.UndirectedDijkstraShortestPathAlgorithm<Point, UndirectedEdge<Point>>(clonedAdjacencyGraph, w => 1d);
-                shortestPathAlgorithm.Compute(amazonPoint);
-
                 if (queen)
                 {
-                    if (SpecificQueenDistances.ContainsKey(amazonPoint)) SpecificQueenDistances.Remove(amazonPoint);
-                    SpecificQueenDistances.Add(amazonPoint, shortestPathAlgorithm.Distances);
+                    FloodFillMinDistancesQueen(amazonPoint, pieceGrid, distancesDictionary);
                 }
                 else
-                {
-                    if (SpecificKingDistances.ContainsKey(amazonPoint)) SpecificKingDistances.Remove(amazonPoint);
-                    SpecificKingDistances.Add(amazonPoint, shortestPathAlgorithm.Distances);
-                }
-
-                foreach (var kvp in shortestPathAlgorithm.Distances)
-                {
-                    if (!distancesDictionary.ContainsKey(kvp.Key)) distancesDictionary.Add(kvp.Key, kvp.Value);
-                    else distancesDictionary[kvp.Key] = Math.Min(distancesDictionary[kvp.Key], kvp.Value);
-                }
+                    FloodFillMinDistancesKing(amazonPoint, pieceGrid, distancesDictionary);
             }
             return distancesDictionary;
         }
