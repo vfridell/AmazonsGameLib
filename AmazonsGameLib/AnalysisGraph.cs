@@ -332,7 +332,7 @@ namespace AmazonsGameLib
             }
         }
 
-        public void FloodFillMinDistancesKing(Point point, PieceGrid pieceGrid, Dictionary<Point, double> result)
+        private void FloodFillMinDistancesKing(Point point, PieceGrid pieceGrid, Dictionary<Point, double> result)
         {
             ISet<Point> visited = new HashSet<Point>();
             Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
@@ -358,7 +358,7 @@ namespace AmazonsGameLib
             }
         }
 
-        public void FloodFillMinDistancesQueen(Point point, PieceGrid pieceGrid, Dictionary<Point, double> result)
+        private void FloodFillMinDistancesQueen(Point point, PieceGrid pieceGrid, Dictionary<Point, double> result)
         {
             ISet<Point> visited = new HashSet<Point>();
             Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
