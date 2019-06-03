@@ -126,7 +126,7 @@ namespace AmazonsGameLib
         /// </summary>
         /// <param name="centerPoint">The origin point to calculate from</param>
         /// <returns>Set of available points from the center point</returns>
-        public ISet<Point> GetOpenPointsOutFrom(Point centerPoint)
+        public IEnumerable<Point> GetOpenPointsOutFrom(Point centerPoint)
         {
             return GetOpenPointsOutFrom(centerPoint, null);
         }
@@ -140,7 +140,7 @@ namespace AmazonsGameLib
         /// second part of the move (arrow shoot) to ignore the spot the amazon came from</param>
         /// <returns>Set of available points from the center point</returns>
         /// <exception cref="ArgumentException">Invalid centerPoint</exception>
-        public ISet<Point> GetOpenPointsOutFrom(Point centerPoint, Point ignoreAmazonPoint)
+        public IEnumerable<Point> GetOpenPointsOutFrom(Point centerPoint, Point ignoreAmazonPoint)
         {
             if (IsOutOfBounds(centerPoint)) throw new ArgumentException($"Center point {centerPoint} is out of grid bounds size {Size}");
 
@@ -164,10 +164,10 @@ namespace AmazonsGameLib
         /// </summary>
         /// <param name="centerPoint">The point to move from</param>
         /// <returns>Set of available moves</returns>
-        public ISet<Move> GetMovesFromPoint(Point centerPoint)
+        public IEnumerable<Move> GetMovesFromPoint(Point centerPoint)
         {
             HashSet<Move> moves = new HashSet<Move>();
-            ISet<Point> amazonMovePoints = GetOpenPointsOutFrom(centerPoint);
+            IEnumerable<Point> amazonMovePoints = GetOpenPointsOutFrom(centerPoint);
             foreach(Point amazonPoint in amazonMovePoints)
             {
                 moves.UnionWith(GetOpenPointsOutFrom(amazonPoint, centerPoint)

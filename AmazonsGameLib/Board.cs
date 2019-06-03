@@ -28,11 +28,11 @@ namespace AmazonsGameLib
         /// </summary>
         public bool IsPlayable => GetAvailableMovesForCurrentPlayer().Any();
 
-        private Dictionary<Owner, ISet<Move>> _moves { get; set; } = new Dictionary<Owner, ISet<Move>>();
+        private Dictionary<Owner, IList<Move>> _moves { get; set; } = new Dictionary<Owner, IList<Move>>();
 
-        public ISet<Move> GetAvailableMovesForCurrentPlayer() => GetAvailableMoves(CurrentPlayer);
+        public IEnumerable<Move> GetAvailableMovesForCurrentPlayer() => GetAvailableMoves(CurrentPlayer);
 
-        public ISet<Move> GetAvailableMoves(Owner owner = Owner.None)
+        public IEnumerable<Move> GetAvailableMoves(Owner owner = Owner.None)
         {
             bool cached = false;
             if (owner == Owner.None) cached = _moves.ContainsKey(Owner.Player1) && _moves.ContainsKey(Owner.Player2);
@@ -43,41 +43,41 @@ namespace AmazonsGameLib
                 IEnumerable<Point> sourceSet;
                 if (owner == Owner.Player1)
                 {
-                    HashSet<Move> results = new HashSet<Move>();
+                    List<Move> results = new List<Move>();
                     foreach (Point p in PieceGrid.Amazon1Points)
                     {
-                        results.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                        results.AddRange(PieceGrid.GetMovesFromPoint(p));
                     }
                     _moves[owner] = results;
                 }
                 else if (owner == Owner.Player2)
                 {
-                    HashSet<Move> results = new HashSet<Move>();
+                    List<Move> results = new List<Move>();
                     foreach (Point p in PieceGrid.Amazon2Points)
                     {
-                        results.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                        results.AddRange(PieceGrid.GetMovesFromPoint(p));
                     }
                     _moves[owner] = results;
                 }
                 else
                 {
-                    HashSet<Move> results1 = new HashSet<Move>();
-                    HashSet<Move> results2 = new HashSet<Move>();
+                    List<Move> results1 = new List<Move>();
+                    List<Move> results2 = new List<Move>();
                     sourceSet = PieceGrid.Amazon1Points.Union(PieceGrid.Amazon2Points);
                     foreach (Point p in PieceGrid.Amazon1Points)
                     {
-                        results1.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                        results1.AddRange(PieceGrid.GetMovesFromPoint(p));
                     }
                     _moves[Owner.Player1] = results1;
                     foreach (Point p in PieceGrid.Amazon2Points)
                     {
-                        results2.UnionWith(PieceGrid.GetMovesFromPoint(p));
+                        results2.AddRange(PieceGrid.GetMovesFromPoint(p));
                     }
                     _moves[Owner.Player2] = results2;
                 }
             }
 
-            if (owner == Owner.None) return (ISet<Move>)_moves[Owner.Player1].Union(_moves[Owner.Player2]);
+            if (owner == Owner.None) return _moves[Owner.Player1].Union(_moves[Owner.Player2]);
             else return _moves[owner];
         }
 

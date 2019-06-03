@@ -315,7 +315,7 @@ namespace AmazonsGameLib
             BuildAnalysis(board.PieceGrid, board.CurrentPlayer);
 
             var result = new AnalysisGraphResult() { player1Advantage = T + M };
-            if (board.GetAvailableMovesForCurrentPlayer().Count > 0) result.gameResult = GameResult.Incomplete;
+            if (board.GetAvailableMovesForCurrentPlayer().Any()) result.gameResult = GameResult.Incomplete;
             else if (board.CurrentPlayer == Owner.Player1) result.gameResult = GameResult.Player2Won;
             else result.gameResult = GameResult.Player1Won;
             return result;

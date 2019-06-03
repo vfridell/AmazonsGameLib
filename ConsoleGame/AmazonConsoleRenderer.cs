@@ -38,7 +38,7 @@ namespace ConsoleGame
                 if (y == game.BoardSize - 6) Console.Write($" T: {analysisGraph.T,6:0.00}");
                 if (y == game.BoardSize - 7) Console.Write($" M: {analysisGraph.M,6:0.00}");
                 if (y == game.BoardSize - 8) Console.Write($" T+M: {analysisGraph.T + analysisGraph.M,4:0.00}");
-                if (y == game.BoardSize - 9) Console.Write($" Moves: {game.CurrentMoves.Count,2:0}");
+                if (y == game.BoardSize - 9) Console.Write($" Moves: {game.CurrentMoves.Count(),2:0}");
 
                 Console.WriteLine();
             }

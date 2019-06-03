@@ -11,7 +11,7 @@ namespace AmazonsGameLib
     {
 
         public List<Board> Boards { get; set; } = new List<Board>();
-        public ISet<Move> CurrentMoves { get; set; }
+        public List<Move> CurrentMoves { get; set; }
         public Player Player1 { get; set; }
         public Player Player2 { get; set; }
         public Board CurrentBoard { get; set; }
@@ -31,17 +31,17 @@ namespace AmazonsGameLib
             Player2 = player2;
             CurrentBoard = new Board(boardSize);
             Boards.Add(CurrentBoard);
-            CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer();
+            CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
         }
 
-        public bool IsComplete() => CurrentMoves.Count == 0;
+        public bool IsComplete() => !CurrentMoves.Any();
 
         public void ApplyMove(Move move)
         {
             CurrentBoard = CurrentBoard.Clone();
             CurrentBoard.ApplyMove(move);
             Boards.Add(CurrentBoard);
-            CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer();
+            CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
         }
     }
 }
