@@ -207,7 +207,6 @@ namespace AmazonsGameLib
             SpecificQueenDistances.Clear();
             SpecificKingDistances.Clear();
             InitializeQueenAdjacencyGraph(pieceGrid);
-            InitializeKingAdjacencyGraph(pieceGrid);
 
             Player1QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, true);
             Player1KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, false);
