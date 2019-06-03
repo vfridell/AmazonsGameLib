@@ -56,17 +56,6 @@ namespace UnitTests
             }
         }
 
-        public void ArticulationPoints()
-        {
-            PieceGrid grid = GetPieceGrid();
-
-            var analysisGraph = new AnalysisGraph();
-            analysisGraph.BuildAnalysis(grid, Owner.Player1);
-
-            HashSet<Point> articulationPointsAnswer = new HashSet<Point> { Point.Get(0, 6), Point.Get(1, 5) };
-            Assert.IsTrue(articulationPointsAnswer.SetEquals(analysisGraph.ArticulationPoints));
-        }
-
         [TestMethod]
         public void EvaluationValues()
         {
@@ -79,8 +68,8 @@ namespace UnitTests
             Assert.AreEqual("3.88", $"{analysisGraph.C1:0.00}");
             Assert.AreEqual("1.83", $"{analysisGraph.C2:0.00}");
             Assert.AreEqual("0.87", $"{analysisGraph.T:0.00}");
-            Assert.AreEqual("19.86", $"{analysisGraph.M:0.00}");
-            Assert.AreEqual("20.73", $"{analysisGraph.T + analysisGraph.M:0.00}");
+            Assert.AreEqual("17.51", $"{analysisGraph.M:0.00}");
+            Assert.AreEqual("18.38", $"{analysisGraph.T + analysisGraph.M:0.00}");
         }
 
         private PieceGrid GetPieceGrid()

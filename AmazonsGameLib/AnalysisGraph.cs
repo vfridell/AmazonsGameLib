@@ -18,14 +18,6 @@ namespace AmazonsGameLib
         Guid LastAnalyzedPieceGridId { get; set; }
 
         /// <summary>
-        /// An undirected graph representing queen moves between points on the PieceGrid
-        /// </summary>
-        public UndirectedGraph<Point, UndirectedEdge<Point>> QueenAdjacencyGraph = new UndirectedGraph<Point, UndirectedEdge<Point>>();
-        /// <summary>
-        /// An undirected graph representing king moves between points on the PieceGrid
-        /// </summary>
-        public UndirectedGraph<Point, UndirectedEdge<Point>> KingAdjacencyGraph = new UndirectedGraph<Point, UndirectedEdge<Point>>();
-        /// <summary>
         /// Each <see cref="Point"/> mapped to a <see cref="LocalAdvantage"/>
         /// </summary>
         public Dictionary<Point, LocalAdvantage> LocalAdvantages = new Dictionary<Point, LocalAdvantage>();
@@ -33,10 +25,6 @@ namespace AmazonsGameLib
         /// Each Point on the grid with an amazon on it mapped to a computed mobility score
         /// </summary>
         public Dictionary<Point, double> AmazonMobilityScores = new Dictionary<Point, double>();
-        /// <summary>
-        /// The set of articulation points on the PieceGrid
-        /// </summary>
-        public HashSet<Point> ArticulationPoints = new HashSet<Point>();
         /// <summary>
         /// Minimum queen move distances for player 1 at each open, reachable point on the PieceGrid
         /// </summary>
@@ -131,70 +119,6 @@ namespace AmazonsGameLib
         }
 
         /// <summary>
-        /// Build an adjacency graph of all open or amazon nodes to represent the current moveable board area
-        /// Nodes (points) on the same line are all given edges to each other to represent "queen" moves
-        /// </summary>
-        /// <param name="pieceGrid">The PieceGrid to build an adjacency graph from</param>
-        private void InitializeQueenAdjacencyGraph(PieceGrid pieceGrid)
-        {
-            QueenAdjacencyGraph.Clear();
-            for (int x = 0; x < pieceGrid.Size; x++)
-            {
-                for (int y = 0; y < pieceGrid.Size; y++)
-                {
-                    Point point = Point.Get(x, y);
-                    Piece piece = pieceGrid.PointPiecesDict[point];
-
-                    if (piece is Open || piece is Amazon)
-                    {
-                        if (!QueenAdjacencyGraph.ContainsVertex(point)) QueenAdjacencyGraph.AddVertex(point);
-                        IEnumerable<UndirectedEdge<Point>> edges = pieceGrid.GetOpenPointsOutFrom(point).Select(op => new UndirectedEdge<Point>(point, op));
-                        //IEnumerable<UndirectedEdge<Point>> edges = pieceGrid.GetNonArrowPointsOutFrom(point).Select(op => new UndirectedEdge<Point>(point, op));
-                        foreach(UndirectedEdge<Point> edge in edges)
-                        {
-                            if (!QueenAdjacencyGraph.ContainsVertex(edge.Target)) QueenAdjacencyGraph.AddVertex(edge.Target);
-                            if (!QueenAdjacencyGraph.ContainsEdge(edge)) QueenAdjacencyGraph.AddEdge(edge);
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Build an adjacency graph of all open or amazon nodes to represent the current moveable board area
-        /// Only points directly adjacent are given edges to each other to represent "king" moves
-        /// </summary>
-        /// <param name="pieceGrid">The PieceGrid to build an adjacency graph from</param>
-        private void InitializeKingAdjacencyGraph(PieceGrid pieceGrid)
-        {
-            KingAdjacencyGraph.Clear();
-            for (int x = 0; x < pieceGrid.Size; x++)
-            {
-                for (int y = 0; y < pieceGrid.Size; y++)
-                {
-                    Point point = Point.Get(x, y);
-                    Piece piece = pieceGrid.PointPiecesDict[point];
-
-                    if (piece is Open || piece is Amazon)
-                    {
-                        foreach(Point adjacentPoint in PointHelpers.GetAdjacentPoints(point))
-                        {
-                            if (pieceGrid.IsOutOfBounds(adjacentPoint)) continue;
-                            Piece adjacentPiece = pieceGrid.PointPiecesDict[adjacentPoint];
-                            if (adjacentPiece is Open)
-                            {
-                                if (!KingAdjacencyGraph.ContainsVertex(point)) KingAdjacencyGraph.AddVertex(point);
-                                if (!KingAdjacencyGraph.ContainsVertex(adjacentPoint)) KingAdjacencyGraph.AddVertex(adjacentPoint);
-                                UndirectedEdge<Point> edge = new UndirectedEdge<Point>(point, adjacentPoint);
-                                if (!KingAdjacencyGraph.ContainsEdge(edge)) KingAdjacencyGraph.AddEdge(edge);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Build all the internal analysis data for the given PieceGrid
         /// </summary>
         /// <param name="pieceGrid">PieceGrid to analyze</param>
@@ -206,13 +130,11 @@ namespace AmazonsGameLib
 
             SpecificQueenDistances.Clear();
             SpecificKingDistances.Clear();
-            InitializeQueenAdjacencyGraph(pieceGrid);
 
             Player1QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, true);
             Player1KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1, false);
             Player2QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2, true);
             Player2KingMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2, false);
-            //FindArticulationPoints();
 
             CalculateLocalAdvantages(pieceGrid, playerToMove);
             CalculateAllAmazonMobility(pieceGrid);
@@ -268,14 +190,16 @@ namespace AmazonsGameLib
             else if (owner == Owner.Player2) minDistancesOppositePlayer = Player1QueenMinDistances;
             else throw new ArgumentException($"Point {p} doesn't have an amazon for either player!");
 
-            var edges = QueenAdjacencyGraph.AdjacentEdges(p);
             double mobility = 0d;
-            foreach(var edge in edges)
+            foreach(Point target in pieceGrid.GetOpenPointsOutFrom(p))
             {
-                if (!minDistancesOppositePlayer.ContainsKey(edge.Target)) continue;
-                if (owner == Owner.Player1 && !LocalAdvantages[edge.Target].Player2Reachable) continue;
-                if (owner == Owner.Player2 && !LocalAdvantages[edge.Target].Player1Reachable) continue;
-                double localMobility = Math.Pow(2, -(SpecificKingDistances[edge.Source][edge.Target])) * QueenAdjacencyGraph.AdjacentDegree(edge.Target);
+                int degree = target.GetAdjacentPoints()
+                                   .Where(adj => pieceGrid.PointPiecesDict.ContainsKey(adj) && !pieceGrid.PointPiecesDict[adj].Impassible )
+                                   .Count();
+                if (!minDistancesOppositePlayer.ContainsKey(target)) continue;
+                if (owner == Owner.Player1 && !LocalAdvantages[target].Player2Reachable) continue;
+                if (owner == Owner.Player2 && !LocalAdvantages[target].Player1Reachable) continue;
+                double localMobility = Math.Pow(2, -(SpecificKingDistances[p][target])) * degree;
                 mobility += localMobility;
             }
             return mobility;
@@ -305,31 +229,6 @@ namespace AmazonsGameLib
                     PlayerToMove = playerToMove,
                 };
                 LocalAdvantages[kvp.Key] = advantageValue;
-            }
-        }
-
-        /// <summary>
-        /// Find all articulation points on the grid.
-        /// An articulation point is a node whose removal causes one subgraph to become two. In Game of Amazons, this 
-        /// indicates a nearly enclosed space
-        /// </summary>
-        private void FindArticulationPoints()
-        {
-            var connectedComponentsAlgorithm = new ConnectedComponentsAlgorithm<Point, UndirectedEdge<Point>>(KingAdjacencyGraph);
-            connectedComponentsAlgorithm.Compute();
-
-            ArticulationPoints.Clear();
-            foreach (var c in connectedComponentsAlgorithm.Components.GroupBy(kvp => kvp.Value))
-            {
-                Point root = c.First().Key;
-
-                var articulationPointObserver = new UndirectedArticulationPointObserver<Point, UndirectedEdge<Point>>(ArticulationPoints);
-                var dfs = new UndirectedDepthFirstSearchAlgorithm<Point, UndirectedEdge<Point>>(KingAdjacencyGraph);
-
-                using (articulationPointObserver.Attach(dfs))
-                {
-                    dfs.Compute(root);
-                }
             }
         }
 
