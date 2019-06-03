@@ -11,8 +11,8 @@ namespace ConsoleGame
     {
         static void Main(string[] args)
         {
-            RenderSpecificState();
-            //PlayRandomGame();
+            //RenderSpecificState();
+            PlayRandomGame();
             //PlayRandomVsOptimusDeepGame();
         }
 

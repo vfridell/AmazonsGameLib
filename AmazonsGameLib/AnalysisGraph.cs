@@ -204,6 +204,8 @@ namespace AmazonsGameLib
             if (pieceGrid.Id == LastAnalyzedPieceGridId) return;
             LastAnalyzedPieceGridId = pieceGrid.Id;
 
+            SpecificQueenDistances.Clear();
+            SpecificKingDistances.Clear();
             InitializeQueenAdjacencyGraph(pieceGrid);
             InitializeKingAdjacencyGraph(pieceGrid);
 
@@ -412,8 +414,6 @@ namespace AmazonsGameLib
 
         public IAnalysisResult Analyze(Board board)
         {
-            InitializeQueenAdjacencyGraph(board.PieceGrid);
-            InitializeKingAdjacencyGraph(board.PieceGrid);
             BuildAnalysis(board.PieceGrid, board.CurrentPlayer);
 
             var result = new AnalysisGraphResult() { player1Advantage = T + M };
