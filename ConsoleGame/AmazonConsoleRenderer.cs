@@ -21,7 +21,7 @@ namespace ConsoleGame
                 StringBuilder mobilityStringBuilder = new StringBuilder(" ");
                 for (int x = 0; x < game.BoardSize; x++)
                 {
-                    Piece piece = game.CurrentBoard.PieceGrid.PointPiecesDict[Point.Get(x, y)];
+                    Piece piece = game.CurrentBoard.PieceGrid.PointPieces[Point.Get(x, y)];
                     Console.Write(GetPieceCharacter(piece));
                     if (piece is Amazon) mobilityStringBuilder.Append($"{analysisGraph.AmazonMobilityScores[Point.Get(x,y)]:0.00}, ");
                 }

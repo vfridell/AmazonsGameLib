@@ -31,7 +31,7 @@ namespace AmazonsGameLib
         {
             _id = Guid.NewGuid();
             Size = size;
-            PointPiecesDict = new Dictionary<Point, Piece>();
+            PointPieces = new PointPieceArray(size);
             Amazon1Points = new HashSet<Point>();
             Amazon2Points = new HashSet<Point>();
         }
@@ -45,7 +45,7 @@ namespace AmazonsGameLib
         {
             _id = Guid.NewGuid();
             Size = size;
-            PointPiecesDict = new Dictionary<Point, Piece>();
+            PointPieces = new PointPieceArray(size);
             Amazon1Points = new HashSet<Point>();
             Amazon2Points = new HashSet<Point>();
             Initialize(playerPieces);
@@ -67,13 +67,13 @@ namespace AmazonsGameLib
                     switch(allPieces[p].Name)
                     {
                         case PieceName.Amazon:
-                            PointPiecesDict.Add(p, allPieces[p]);
+                            PointPieces.Add(p, allPieces[p]);
                             Amazon amazon = (Amazon)allPieces[p];
                             if (amazon.Owner == Owner.Player1) Amazon1Points.Add(p);
                             else Amazon2Points.Add(p);
                             break;
                         default:
-                            PointPiecesDict.Add(p, allPieces[p]);
+                            PointPieces.Add(p, allPieces[p]);
                             break;
                     }
                 }
@@ -93,12 +93,12 @@ namespace AmazonsGameLib
                     Point p = Point.Get(x, y);
                     if (playerPieces.TryGetValue(p, out Amazon amazon))
                     {
-                        PointPiecesDict.Add(p, amazon);
+                        PointPieces.Add(p, amazon);
                         if (amazon.Owner == Owner.Player1) Amazon1Points.Add(p);
                         else Amazon2Points.Add(p);
                     }
                     else
-                        PointPiecesDict.Add(p, Open.Get());
+                        PointPieces.Add(p, Open.Get());
                 }
             }
         }
@@ -110,7 +110,7 @@ namespace AmazonsGameLib
         /// <summary>
         /// All points and pieces on the grid
         /// </summary>
-        public readonly IDictionary<Point, Piece> PointPiecesDict;
+        public readonly PointPieceArray PointPieces;
         /// <summary>
         /// Player 1 amazon positions (points)
         /// </summary>
@@ -149,7 +149,7 @@ namespace AmazonsGameLib
             {
                 Point nextPoint = centerPoint + delta;
                 while(!IsOutOfBounds(nextPoint) && 
-                    (nextPoint.Equals(ignoreAmazonPoint) || !PointPiecesDict[nextPoint].Impassible))
+                    (nextPoint.Equals(ignoreAmazonPoint) || !PointPieces[nextPoint].Impassible))
                 {
                     returnSet.Add(nextPoint);
                     nextPoint = nextPoint + delta;
@@ -183,13 +183,13 @@ namespace AmazonsGameLib
         /// <exception cref="ArgumentException">Invalid move</exception>
         public void ApplyMove(Move move)
         {
-            Amazon movingPiece = PointPiecesDict[move.Origin] as Amazon;
-            if (movingPiece == null) throw new ArgumentException($"You can only move Amazons. Tried to move {PointPiecesDict[move.Origin].Name}");
-            if(PointPiecesDict[move.AmazonsPoint].Name != PieceName.Open) throw new ArgumentException($"You can only move to an open spot. Tried to move to {PointPiecesDict[move.AmazonsPoint].Name}");
-            if(move.ArrowPoint != move.Origin && PointPiecesDict[move.ArrowPoint].Name != PieceName.Open) throw new ArgumentException($"You can only shoot to an open spot. Tried to shoot to {PointPiecesDict[move.ArrowPoint].Name}");
-            PointPiecesDict[move.Origin] = Open.Get();
-            PointPiecesDict[move.AmazonsPoint] = movingPiece;
-            PointPiecesDict[move.ArrowPoint] = movingPiece.GetArrow();
+            Amazon movingPiece = PointPieces[move.Origin] as Amazon;
+            if (movingPiece == null) throw new ArgumentException($"You can only move Amazons. Tried to move {PointPieces[move.Origin].Name}");
+            if(PointPieces[move.AmazonsPoint].Name != PieceName.Open) throw new ArgumentException($"You can only move to an open spot. Tried to move to {PointPieces[move.AmazonsPoint].Name}");
+            if(move.ArrowPoint != move.Origin && PointPieces[move.ArrowPoint].Name != PieceName.Open) throw new ArgumentException($"You can only shoot to an open spot. Tried to shoot to {PointPieces[move.ArrowPoint].Name}");
+            PointPieces[move.Origin] = Open.Get();
+            PointPieces[move.AmazonsPoint] = movingPiece;
+            PointPieces[move.ArrowPoint] = movingPiece.GetArrow();
             if (movingPiece.Owner == Owner.Player1)
             {
                 Amazon1Points.Remove(move.Origin);
@@ -217,7 +217,7 @@ namespace AmazonsGameLib
         public PieceGrid Clone()
         {
             PieceGrid newGrid = new PieceGrid(Size);
-            newGrid.Initialize(PointPiecesDict);
+            newGrid.Initialize(PointPieces);
             return newGrid;
         }
 

@@ -23,8 +23,8 @@ namespace UnitTests
         {
             HashSet<Point> answer = new HashSet<Point>() { Point.Get(9, 0), Point.Get(8, 1), Point.Get(7, 2), Point.Get(6, 3), Point.Get(5, 0), Point.Get(5, 1), Point.Get(5, 2), Point.Get(5, 3), Point.Get(1, 0), Point.Get(2, 1), Point.Get(3, 2), Point.Get(4, 3), Point.Get(9, 4), Point.Get(8, 4), Point.Get(7, 4), Point.Get(6, 4), Point.Get(0, 4), Point.Get(1, 4), Point.Get(2, 4), Point.Get(3, 4), Point.Get(4, 4), Point.Get(9, 8), Point.Get(8, 7), Point.Get(7, 6), Point.Get(6, 5), Point.Get(5, 9), Point.Get(5, 8), Point.Get(5, 7), Point.Get(5, 6), Point.Get(5, 5), Point.Get(0, 9), Point.Get(1, 8), Point.Get(2, 7), Point.Get(3, 6), Point.Get(4, 5), };
             PieceGrid grid = new PieceGrid(10, PieceHelpers.GetInitialAmazonPositions(10));
-            grid.PointPiecesDict[Point.Get(0, 3)] = Open.Get();
-            grid.PointPiecesDict[Point.Get(5, 4)] = AmazonPlayer1.Get();
+            grid.PointPieces[Point.Get(0, 3)] = Open.Get();
+            grid.PointPieces[Point.Get(5, 4)] = AmazonPlayer1.Get();
             IEnumerable<Point> points = grid.GetOpenPointsOutFrom(Point.Get(5, 4));
             Assert.IsTrue(points.ToSet().SetEquals(answer));
         }
@@ -34,11 +34,11 @@ namespace UnitTests
         {
             HashSet<Point> answer = new HashSet<Point>() { };
             PieceGrid grid = new PieceGrid(10, PieceHelpers.GetInitialAmazonPositions(10));
-            grid.PointPiecesDict[Point.Get(0, 4)] = ArrowPlayer1.Get();
-            grid.PointPiecesDict[Point.Get(1, 4)] = ArrowPlayer1.Get();
-            grid.PointPiecesDict[Point.Get(1, 3)] = ArrowPlayer1.Get();
-            grid.PointPiecesDict[Point.Get(1, 2)] = ArrowPlayer1.Get();
-            grid.PointPiecesDict[Point.Get(0, 2)] = ArrowPlayer1.Get();
+            grid.PointPieces[Point.Get(0, 4)] = ArrowPlayer1.Get();
+            grid.PointPieces[Point.Get(1, 4)] = ArrowPlayer1.Get();
+            grid.PointPieces[Point.Get(1, 3)] = ArrowPlayer1.Get();
+            grid.PointPieces[Point.Get(1, 2)] = ArrowPlayer1.Get();
+            grid.PointPieces[Point.Get(0, 2)] = ArrowPlayer1.Get();
             IEnumerable<Point> points = grid.GetOpenPointsOutFrom(Point.Get(0, 3));
             Assert.IsTrue(points.ToSet().SetEquals(answer));
         }
@@ -59,8 +59,8 @@ namespace UnitTests
         {
             HashSet<Point> answer = new HashSet<Point>() { Point.Get(5, 0), Point.Get(4, 1), Point.Get(3, 1), Point.Get(1, 0), Point.Get(2, 1), Point.Get(9, 2), Point.Get(8, 2), Point.Get(7, 2), Point.Get(6, 2), Point.Get(5, 2), Point.Get(4, 2), Point.Get(0, 2), Point.Get(1, 2), Point.Get(2, 2), Point.Get(9, 8), Point.Get(8, 7), Point.Get(7, 6), Point.Get(6, 5), Point.Get(5, 4), Point.Get(4, 3), Point.Get(3, 8), Point.Get(3, 7), Point.Get(3, 6), Point.Get(3, 5), Point.Get(3, 4), Point.Get(3, 3), Point.Get(0, 5), Point.Get(1, 4), Point.Get(2, 3), };
             PieceGrid grid = new PieceGrid(10, PieceHelpers.GetInitialAmazonPositions(10));
-            grid.PointPiecesDict[Point.Get(0, 3)] = Open.Get();
-            grid.PointPiecesDict[Point.Get(5, 4)] = AmazonPlayer1.Get();
+            grid.PointPieces[Point.Get(0, 3)] = Open.Get();
+            grid.PointPieces[Point.Get(5, 4)] = AmazonPlayer1.Get();
             IEnumerable<Point> points = grid.GetOpenPointsOutFrom(Point.Get(3, 2), Point.Get(5, 4));
             //string code = GetPointsString(points);
             Assert.IsTrue(points.ToSet().SetEquals(answer));
@@ -80,15 +80,15 @@ namespace UnitTests
         public void ApplyMove()
         {
             PieceGrid grid = new PieceGrid(10, PieceHelpers.GetInitialAmazonPositions(10));
-            Assert.AreEqual(AmazonPlayer1.Get(), grid.PointPiecesDict[Point.Get(0, 3)]);
-            Assert.AreEqual(Open.Get(), grid.PointPiecesDict[Point.Get(6, 3)]);
-            Assert.AreEqual(Open.Get(), grid.PointPiecesDict[Point.Get(6, 7)]);
+            Assert.AreEqual(AmazonPlayer1.Get(), grid.PointPieces[Point.Get(0, 3)]);
+            Assert.AreEqual(Open.Get(), grid.PointPieces[Point.Get(6, 3)]);
+            Assert.AreEqual(Open.Get(), grid.PointPieces[Point.Get(6, 7)]);
             Assert.IsTrue(grid.Amazon1Points.Contains(Point.Get(0, 3)));
             Assert.IsFalse(grid.Amazon1Points.Contains(Point.Get(6, 3)));
             grid.ApplyMove(new Move(Point.Get(0, 3), Point.Get(6, 3), Point.Get(6, 7)));
-            Assert.AreEqual(Open.Get(), grid.PointPiecesDict[Point.Get(0, 3)]);
-            Assert.AreEqual(AmazonPlayer1.Get(), grid.PointPiecesDict[Point.Get(6, 3)]);
-            Assert.AreEqual(ArrowPlayer1.Get(), grid.PointPiecesDict[Point.Get(6, 7)]);
+            Assert.AreEqual(Open.Get(), grid.PointPieces[Point.Get(0, 3)]);
+            Assert.AreEqual(AmazonPlayer1.Get(), grid.PointPieces[Point.Get(6, 3)]);
+            Assert.AreEqual(ArrowPlayer1.Get(), grid.PointPieces[Point.Get(6, 7)]);
             Assert.IsTrue(grid.Amazon1Points.Contains(Point.Get(6, 3)));
             Assert.IsFalse(grid.Amazon1Points.Contains(Point.Get(0, 3)));
         }

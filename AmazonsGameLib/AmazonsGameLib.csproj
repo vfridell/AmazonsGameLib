@@ -72,6 +72,7 @@
     <Compile Include="Player.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="PointHelpers.cs" />
+    <Compile Include="PointPieceArray.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SetHelper.cs" />
     <Compile Include="Wall.cs" />

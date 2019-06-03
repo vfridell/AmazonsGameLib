@@ -82,7 +82,7 @@ namespace UnitTests
             PieceGrid grid = new PieceGrid(10, amazonsDict);
             foreach (Point p in arrowPoints)
             {
-                grid.PointPiecesDict[p] = ArrowPlayer1.Get();
+                grid.PointPieces[p] = ArrowPlayer1.Get();
             }
             return grid;
         }

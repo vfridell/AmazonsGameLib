@@ -85,10 +85,10 @@ namespace AmazonsGameLib
         {
             Owner owner = CurrentPlayer;
 
-            if (PieceGrid.PointPiecesDict[move.Origin].Owner != owner)
+            if (PieceGrid.PointPieces[move.Origin].Owner != owner)
                 throw new ArgumentException($"Move given doesn't correspond to {owner} turn. Move: {move}");
-            if (PieceGrid.PointPiecesDict[move.Origin].Name != PieceName.Amazon)
-                throw new ArgumentException($"Move given isn't on an Amazon. You cannot move a {PieceGrid.PointPiecesDict[move.Origin].Name}. Move: {move}");
+            if (PieceGrid.PointPieces[move.Origin].Name != PieceName.Amazon)
+                throw new ArgumentException($"Move given isn't on an Amazon. You cannot move a {PieceGrid.PointPieces[move.Origin].Name}. Move: {move}");
 
             PieceGrid.ApplyMove(move);
 

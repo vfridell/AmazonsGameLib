@@ -194,7 +194,7 @@ namespace AmazonsGameLib
             foreach(Point target in pieceGrid.GetOpenPointsOutFrom(p))
             {
                 int degree = target.GetAdjacentPoints()
-                                   .Where(adj => pieceGrid.PointPiecesDict.ContainsKey(adj) && !pieceGrid.PointPiecesDict[adj].Impassible )
+                                   .Where(adj => pieceGrid.PointPieces.ContainsKey(adj) && !pieceGrid.PointPieces[adj].Impassible )
                                    .Count();
                 if (!minDistancesOppositePlayer.ContainsKey(target)) continue;
                 if (owner == Owner.Player1 && !LocalAdvantages[target].Player2Reachable) continue;
@@ -213,7 +213,7 @@ namespace AmazonsGameLib
         private void CalculateLocalAdvantages(PieceGrid pieceGrid, Owner playerToMove)
         {
             LocalAdvantages.Clear();
-            foreach (var kvp in pieceGrid.PointPiecesDict)
+            foreach (var kvp in pieceGrid.PointPieces)
             {
                 if (!(kvp.Value is Open)) continue;
                 if (!Player1QueenMinDistances.TryGetValue(kvp.Key, out double player1QueenDistance)) player1QueenDistance = 1000d;
@@ -237,7 +237,7 @@ namespace AmazonsGameLib
             ISet<Point> visited = new HashSet<Point>();
             Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
             foreach (Point p in point.GetAdjacentPoints().Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                                       !pieceGrid.PointPiecesDict[adj].Impassible)) toVisit.Enqueue((p, 1));
+                                                                       !pieceGrid.PointPieces[adj].Impassible)) toVisit.Enqueue((p, 1));
 
             while(toVisit.Any())
             {
@@ -250,7 +250,7 @@ namespace AmazonsGameLib
                 visited.Add(p.Item1);
                 foreach (Point pNext in p.Item1.GetAdjacentPoints()
                                                .Where(adj => !pieceGrid.IsOutOfBounds(adj) && 
-                                                             !pieceGrid.PointPiecesDict[adj].Impassible &&
+                                                             !pieceGrid.PointPieces[adj].Impassible &&
                                                              !visited.Contains(adj)))
                 {
                     toVisit.Enqueue((pNext, p.Item2 + 1));
@@ -263,7 +263,7 @@ namespace AmazonsGameLib
             ISet<Point> visited = new HashSet<Point>();
             Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
             foreach (Point p in pieceGrid.GetOpenPointsOutFrom(point).Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                                       !pieceGrid.PointPiecesDict[adj].Impassible)) toVisit.Enqueue((p, 1));
+                                                                       !pieceGrid.PointPieces[adj].Impassible)) toVisit.Enqueue((p, 1));
 
             while (toVisit.Any())
             {
@@ -276,7 +276,7 @@ namespace AmazonsGameLib
                 visited.Add(p.Item1);
                 foreach (Point pNext in pieceGrid.GetOpenPointsOutFrom(p.Item1)
                                                .Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                             !pieceGrid.PointPiecesDict[adj].Impassible &&
+                                                             !pieceGrid.PointPieces[adj].Impassible &&
                                                              !visited.Contains(adj)))
                 {
                     toVisit.Enqueue((pNext, p.Item2 + 1));
