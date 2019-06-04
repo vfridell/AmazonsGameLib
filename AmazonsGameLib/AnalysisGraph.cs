@@ -20,35 +20,35 @@ namespace AmazonsGameLib
         /// <summary>
         /// Each <see cref="Point"/> mapped to a <see cref="LocalAdvantage"/>
         /// </summary>
-        public Dictionary<Point, LocalAdvantage> LocalAdvantages = new Dictionary<Point, LocalAdvantage>();
+        public PointSquareArray<LocalAdvantage> LocalAdvantages;
         /// <summary>
         /// Each Point on the grid with an amazon on it mapped to a computed mobility score
         /// </summary>
-        public Dictionary<Point, double> AmazonMobilityScores = new Dictionary<Point, double>();
+        public PointSquareArray<double> AmazonMobilityScores;
         /// <summary>
         /// Minimum queen move distances for player 1 at each open, reachable point on the PieceGrid
         /// </summary>
-        public IDictionary<Point, double> Player1QueenMinDistances;
+        public PointSquareArray<double?> Player1QueenMinDistances;
         /// <summary>
         /// Minimum king move distances for player 1 at each open, reachable point on the PieceGrid
         /// </summary>
-        public IDictionary<Point, double> Player1KingMinDistances;
+        public PointSquareArray<double?> Player1KingMinDistances;
         /// <summary>
         /// Minimum queen move distances for player 2 at each open, reachable point on the PieceGrid
         /// </summary>
-        public IDictionary<Point, double> Player2QueenMinDistances;
+        public PointSquareArray<double?> Player2QueenMinDistances;
         /// <summary>
         /// Minimum king move distances for player 2 at each open, reachable point on the PieceGrid
         /// </summary>
-        public IDictionary<Point, double> Player2KingMinDistances;
+        public PointSquareArray<double?> Player2KingMinDistances;
         /// <summary>
         /// Queen move distance for each specific amazon to each other open, reachable point on the PieceGrid
         /// </summary>
-        public IDictionary<Point, IDictionary<Point, double>> SpecificQueenDistances = new Dictionary<Point, IDictionary<Point,double>>();
+        public PointSquareArray<PointSquareArray<double>> SpecificQueenDistances;
         /// <summary>
         /// King move distance for each specific amazon to each other open, reachable point on the PieceGrid
         /// </summary>
-        public IDictionary<Point, IDictionary<Point, double>> SpecificKingDistances = new Dictionary<Point, IDictionary<Point,double>>();
+        public PointSquareArray<PointSquareArray<double>> SpecificKingDistances;
 
         /// <summary>
         /// A weight >= 0 that indicates global competitive reach of breathing space. Will typically decrease each move, will
@@ -128,6 +128,11 @@ namespace AmazonsGameLib
             if (pieceGrid.Id == LastAnalyzedPieceGridId) return;
             LastAnalyzedPieceGridId = pieceGrid.Id;
 
+            LocalAdvantages = new PointSquareArray<LocalAdvantage>(pieceGrid.Size);
+            AmazonMobilityScores = new PointSquareArray<double>(pieceGrid.Size);
+            SpecificQueenDistances = new PointSquareArray<PointSquareArray<double>>(pieceGrid.Size);
+            SpecificKingDistances = new PointSquareArray<PointSquareArray<double>>(pieceGrid.Size);
+
             SpecificQueenDistances.Clear();
             SpecificKingDistances.Clear();
 
@@ -139,12 +144,12 @@ namespace AmazonsGameLib
             CalculateLocalAdvantages(pieceGrid, playerToMove);
             CalculateAllAmazonMobility(pieceGrid);
 
-            W = LocalAdvantages.Where( a => a.Value.Player1Reachable && a.Value.Player2Reachable )
+            W = LocalAdvantages.Where( a => a.Value != null && a.Value.Player1Reachable && a.Value.Player2Reachable )
                                .Sum( a => Math.Pow(2, -(Math.Abs(a.Value.Player1QueenDistance - a.Value.Player2QueenDistance))) );
-            C1 = 2 * LocalAdvantages.Sum( a => Math.Pow(2, -(a.Value.Player1QueenDistance)) - Math.Pow(2, -(a.Value.Player2QueenDistance)) );
-            C2 = LocalAdvantages.Sum( a => Math.Min(1, Math.Max(-1, (a.Value.Player2KingDistance-a.Value.Player1KingDistance) / 6d)) );
-            T1 = LocalAdvantages.Sum( a => a.Value.DeltaQueen );
-            T2 = LocalAdvantages.Sum( a => a.Value.DeltaKing );
+            C1 = 2 * LocalAdvantages.Where(a => a.Value != null).Sum( a => Math.Pow(2, -(a.Value.Player1QueenDistance)) - Math.Pow(2, -(a.Value.Player2QueenDistance)) );
+            C2 = LocalAdvantages.Where(a => a.Value != null).Sum( a => Math.Min(1, Math.Max(-1, (a.Value.Player2KingDistance-a.Value.Player1KingDistance) / 6d)) );
+            T1 = LocalAdvantages.Where(a => a.Value != null).Sum( a => a.Value.DeltaQueen );
+            T2 = LocalAdvantages.Where(a => a.Value != null).Sum( a => a.Value.DeltaKing );
 
             T = (F1(W) * T1) + (F2(W) * C1) + (F3(W) * C2) + (F4(W) * T2);
 
@@ -185,7 +190,7 @@ namespace AmazonsGameLib
         /// <returns>Numeric mobility score, higher numbers = more mobile</returns>
         private double CalculateAmazonMobility(Point p, Owner owner, PieceGrid pieceGrid)
         {
-            IDictionary<Point, double> minDistancesOppositePlayer;
+            IDictionary<Point, double?> minDistancesOppositePlayer;
             if (owner == Owner.Player1) minDistancesOppositePlayer = Player2QueenMinDistances;
             else if (owner == Owner.Player2) minDistancesOppositePlayer = Player1QueenMinDistances;
             else throw new ArgumentException($"Point {p} doesn't have an amazon for either player!");
@@ -216,10 +221,10 @@ namespace AmazonsGameLib
             foreach (var kvp in pieceGrid.PointPieces)
             {
                 if (!(kvp.Value is Open)) continue;
-                if (!Player1QueenMinDistances.TryGetValue(kvp.Key, out double player1QueenDistance)) player1QueenDistance = 1000d;
-                if (!Player2QueenMinDistances.TryGetValue(kvp.Key, out double player2QueenDistance)) player2QueenDistance = 1000d;
-                if (!Player1KingMinDistances.TryGetValue(kvp.Key, out double player1KingDistance)) player1KingDistance = 1000d;
-                if (!Player2KingMinDistances.TryGetValue(kvp.Key, out double player2KingDistance)) player2KingDistance = 1000d;
+                double player1QueenDistance = Player1QueenMinDistances[kvp.Key] ?? 1000d;
+                double player2QueenDistance = Player2QueenMinDistances[kvp.Key] ?? 1000d;
+                double player1KingDistance = Player1KingMinDistances[kvp.Key] ?? 1000d;
+                double player2KingDistance = Player2KingMinDistances[kvp.Key] ?? 1000d;
                 LocalAdvantage advantageValue = new LocalAdvantage
                 {
                     Player1QueenDistance = player1QueenDistance,
@@ -232,20 +237,23 @@ namespace AmazonsGameLib
             }
         }
 
-        private void FloodFillMinDistancesKing(Point point, PieceGrid pieceGrid, Dictionary<Point, double> result)
+        private void FloodFillMinDistancesKing(Point point, PieceGrid pieceGrid, PointSquareArray<double?> result)
         {
             ISet<Point> visited = new HashSet<Point>();
             Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
             foreach (Point p in point.GetAdjacentPoints().Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                                       !pieceGrid.PointPieces[adj].Impassible)) toVisit.Enqueue((p, 1));
+                                                                       !pieceGrid.PointPieces[adj].Impassible))
+            {
+                toVisit.Enqueue((p, 1));
+            }
 
             while(toVisit.Any())
             {
                 (Point, double) p = toVisit.Dequeue();
                 if (visited.Contains(p.Item1)) continue;
-                if (result.ContainsKey(p.Item1)) result[p.Item1] = Math.Min(p.Item2, result[p.Item1]);
+                if (result[p.Item1].HasValue) result[p.Item1] = Math.Min(p.Item2, result[p.Item1].Value);
                 else result.Add(p.Item1, p.Item2);
-                if (!SpecificKingDistances.ContainsKey(point)) SpecificKingDistances.Add(point, new Dictionary<Point, double>());
+                if (SpecificKingDistances[point] == null) SpecificKingDistances.Add(point, new PointSquareArray<double>(pieceGrid.Size));
                 SpecificKingDistances[point].Add(p.Item1, p.Item2);
                 visited.Add(p.Item1);
                 foreach (Point pNext in p.Item1.GetAdjacentPoints()
@@ -258,21 +266,24 @@ namespace AmazonsGameLib
             }
         }
 
-        private void FloodFillMinDistancesQueen(Point point, PieceGrid pieceGrid, Dictionary<Point, double> result)
+        private void FloodFillMinDistancesQueen(Point point, PieceGrid pieceGrid, PointSquareArray<double?> result)
         {
             ISet<Point> visited = new HashSet<Point>();
             Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
             foreach (Point p in pieceGrid.GetOpenPointsOutFrom(point).Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                                       !pieceGrid.PointPieces[adj].Impassible)) toVisit.Enqueue((p, 1));
+                                                                       !pieceGrid.PointPieces[adj].Impassible))
+            {
+                toVisit.Enqueue((p, 1));
+            }
 
             while (toVisit.Any())
             {
                 (Point, double) p = toVisit.Dequeue();
                 if (visited.Contains(p.Item1)) continue;
-                if (result.ContainsKey(p.Item1)) result[p.Item1] = Math.Min(p.Item2, result[p.Item1]);
+                if (result[p.Item1].HasValue) result[p.Item1] = Math.Min(p.Item2, result[p.Item1].Value);
                 else result.Add(p.Item1, p.Item2);
-                if (!SpecificQueenDistances.ContainsKey(point)) SpecificQueenDistances.Add(point, new Dictionary<Point, double>());
-                        SpecificQueenDistances[point].Add(p.Item1, p.Item2);
+                if (SpecificQueenDistances[point] == null) SpecificQueenDistances.Add(point, new PointSquareArray<double>(pieceGrid.Size));
+                SpecificQueenDistances[point].Add(p.Item1, p.Item2);
                 visited.Add(p.Item1);
                 foreach (Point pNext in pieceGrid.GetOpenPointsOutFrom(p.Item1)
                                                .Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
@@ -292,9 +303,9 @@ namespace AmazonsGameLib
         /// <param name="owner">Player whos amazons we are calculating distance for</param>
         /// <param name="queen">True for Queen distances, false for King distances</param>
         /// <returns>Dictionary of Points with their minimum distance values for the given player and move type</returns>
-        private IDictionary<Point, double> BuildDistancesDictionary(PieceGrid pieceGrid, Owner owner, bool queen)
+        private PointSquareArray<double?> BuildDistancesDictionary(PieceGrid pieceGrid, Owner owner, bool queen)
         {
-            var distancesDictionary = new Dictionary<Point, double>();
+            var distancesDictionary = new PointSquareArray<double?>(pieceGrid.Size);
             ISet<Point> amazonPoints;
             if (owner == Owner.Player1) amazonPoints = pieceGrid.Amazon1Points;
             else amazonPoints = pieceGrid.Amazon2Points;

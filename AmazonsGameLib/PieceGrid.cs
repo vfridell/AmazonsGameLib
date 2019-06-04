@@ -31,7 +31,7 @@ namespace AmazonsGameLib
         {
             _id = Guid.NewGuid();
             Size = size;
-            PointPieces = new PointPieceArray(size);
+            PointPieces = new PointSquareArray<Piece>(size);
             Amazon1Points = new HashSet<Point>();
             Amazon2Points = new HashSet<Point>();
         }
@@ -45,7 +45,7 @@ namespace AmazonsGameLib
         {
             _id = Guid.NewGuid();
             Size = size;
-            PointPieces = new PointPieceArray(size);
+            PointPieces = new PointSquareArray<Piece>(size);
             Amazon1Points = new HashSet<Point>();
             Amazon2Points = new HashSet<Point>();
             Initialize(playerPieces);
@@ -110,7 +110,7 @@ namespace AmazonsGameLib
         /// <summary>
         /// All points and pieces on the grid
         /// </summary>
-        public readonly PointPieceArray PointPieces;
+        public readonly PointSquareArray<Piece> PointPieces;
         /// <summary>
         /// Player 1 amazon positions (points)
         /// </summary>
