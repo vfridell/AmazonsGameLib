@@ -73,7 +73,7 @@ namespace AmazonsGameLib
         {
             aiCancelToken.ThrowIfCancellationRequested();
 
-            IEnumerable<NegamaxContext> orderedAnalysis = GetSortedMoves(context.Board, color, aiCancelToken);
+            IEnumerable<NegamaxContext> orderedAnalysis = GetMoves(context.Board, color, aiCancelToken);
             double bestScore = MinValue;
             Move localBestMove = orderedAnalysis.First().Move;
 

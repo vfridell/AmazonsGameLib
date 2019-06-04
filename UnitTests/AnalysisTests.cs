@@ -52,7 +52,57 @@ namespace UnitTests
             foreach (Move move in game.CurrentMoves)
             {
                 var analysisGraph = new AnalysisGraph();
-                analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, Owner.Player1);
+                Board nextBoard = game.CurrentBoard.Clone();
+                nextBoard.ApplyMove(move);
+                analysisGraph.BuildAnalysis(nextBoard.PieceGrid, Owner.Player1);
+            }
+        }
+
+        [TestMethod]
+        public void AllFirstMovesAnalyzedLite()
+        {
+            Game game = new Game();
+            game.Begin(null, null, 10);
+
+            foreach (Move move in game.CurrentMoves)
+            {
+                var analysisGraph = new AnalysisGraphLite();
+                Board nextBoard = game.CurrentBoard.Clone();
+                nextBoard.ApplyMove(move);
+                analysisGraph.BuildAnalysis(nextBoard.PieceGrid, Owner.Player1);
+            }
+        }
+
+        [TestMethod]
+        public void AllFirstMoves()
+        {
+            Game game = new Game();
+            game.Begin(null, null, 10);
+
+            foreach (Move move in game.CurrentMoves)
+            {
+                Board nextBoard = game.CurrentBoard.Clone();
+                nextBoard.ApplyMove(move);
+            }
+        }
+
+
+        [TestMethod]
+        public void AllSecondMoves()
+        {
+            Game game = new Game();
+            game.Begin(null, null, 10);
+
+            foreach (Move move in game.CurrentMoves)
+            {
+                Board nextBoard = game.CurrentBoard.Clone();
+                nextBoard.ApplyMove(move);
+                IEnumerable<Move> moves = nextBoard.GetAvailableMovesForCurrentPlayer();
+                System.Threading.Tasks.Parallel.ForEach(moves, (move2) =>
+                {
+                    Board nextBoard2 = nextBoard.Clone();
+                    nextBoard2.ApplyMove(move2);
+                });
             }
         }
 

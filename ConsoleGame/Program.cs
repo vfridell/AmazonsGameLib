@@ -12,8 +12,8 @@ namespace ConsoleGame
         static void Main(string[] args)
         {
             //RenderSpecificState();
-            PlayRandomGame();
-            //PlayRandomVsOptimusDeepGame();
+            //PlayRandomGame();
+            PlayRandomVsOptimusDeepGame();
         }
 
         static void ShowMobilityScorePairs()

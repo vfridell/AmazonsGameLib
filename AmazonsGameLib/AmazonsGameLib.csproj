@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Amazon.cs" />
+    <Compile Include="AnalysisGraphLite.cs" />
     <Compile Include="AnalysisGraph.cs" />
     <Compile Include="Arrow.cs" />
     <Compile Include="Board.cs" />
