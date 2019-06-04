@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleGame", "ConsoleGame\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvalPerformance", "EvalPerformance\EvalPerformance.csproj", "{528DD3E2-3C67-429F-A5CF-6E601A29CF8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GamePlayer", "GamePlayer\GamePlayer.csproj", "{91D8E6E9-FA46-4092-A84C-7E6741A784E1}"
+EndProject
 Global
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
@@ -36,6 +38,10 @@ Global
 		{528DD3E2-3C67-429F-A5CF-6E601A29CF8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{528DD3E2-3C67-429F-A5CF-6E601A29CF8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{528DD3E2-3C67-429F-A5CF-6E601A29CF8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91D8E6E9-FA46-4092-A84C-7E6741A784E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91D8E6E9-FA46-4092-A84C-7E6741A784E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91D8E6E9-FA46-4092-A84C-7E6741A784E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91D8E6E9-FA46-4092-A84C-7E6741A784E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
