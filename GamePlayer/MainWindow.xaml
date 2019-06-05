@@ -6,7 +6,17 @@
         xmlns:local="clr-namespace:GamePlayer"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid Name="MainGrid">
-        
-    </Grid>
+    <Window.CommandBindings>
+        <CommandBinding Command="New" CanExecute="NewCommand_CanExecute" Executed="NewCommand_Executed"/>
+    </Window.CommandBindings>
+    <DockPanel>
+        <Menu Name="TopMenu" DockPanel.Dock="Top" >
+            <MenuItem Header="Game">
+                <MenuItem Header="_New" Command="New"/>
+            </MenuItem>
+        </Menu>
+        <Grid Name="MainGrid">
+            
+        </Grid>
+    </DockPanel>
 </Window>
