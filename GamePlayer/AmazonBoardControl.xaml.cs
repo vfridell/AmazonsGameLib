@@ -23,13 +23,14 @@ namespace GamePlayer
     public partial class AmazonBoardControl : UserControl
     {
         public Board Board { get; set; }
+        public bool IsReadOnly { get; set; }
 
-        public AmazonBoardControl(Board board)
+        public AmazonBoardControl(Board board, bool readOnly)
         {
             InitializeComponent();
+            IsReadOnly = readOnly;
             Board = board;
             DrawBoard();
-
         }
 
         private void DrawBoard()
@@ -51,13 +52,16 @@ namespace GamePlayer
                 Grid.SetColumn(amazonPieceControl, column);
                 BoardGrid.Children.Add(amazonPieceControl);
 
-                if (kvp.Value.Name == PieceName.Amazon && kvp.Value.Owner == Board.CurrentPlayer)
+                if (!IsReadOnly)
                 {
-                    amazonPieceControl.MouseDown += (sender, e) => { InitiateMove(kvp.Key); };
-                }
-                else if (kvp.Value.Name == PieceName.Open)
-                {
-                    rectangle.MouseDown += (sender, e) => { ClearInitialMoves(); };
+                    if (kvp.Value.Name == PieceName.Amazon && kvp.Value.Owner == Board.CurrentPlayer)
+                    {
+                        amazonPieceControl.MouseDown += (sender, e) => { InitiateMove(kvp.Key); };
+                    }
+                    else if (kvp.Value.Name == PieceName.Open)
+                    {
+                        rectangle.MouseDown += (sender, e) => { ClearInitialMoves(); };
+                    }
                 }
             }
         }
@@ -85,7 +89,7 @@ namespace GamePlayer
         private void MovePart1(Point p)
         {
             _amazonMovePoint = p;
-            IEnumerable<Point> points = Board.GetAvailableMovesForCurrentPlayer().Where(m => m.AmazonsPoint.Equals(p)).Select(m => m.ArrowPoint).Distinct();
+            IEnumerable<Point> points = Board.GetAvailableMovesForCurrentPlayer().Where(m => m.Origin.Equals(_originMovePoint) && m.AmazonsPoint.Equals(p)).Select(m => m.ArrowPoint).Distinct();
             HighlightCells(points, true);
         }
 

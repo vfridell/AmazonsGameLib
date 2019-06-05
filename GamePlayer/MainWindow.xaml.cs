@@ -40,7 +40,7 @@ namespace GamePlayer
             game.Begin(null, null, 10);
             //game.CurrentBoard.PieceGrid = grid;
 
-            AmazonBoardControl boardControl = new AmazonBoardControl(game.CurrentBoard);
+            AmazonBoardControl boardControl = new AmazonBoardControl(game.CurrentBoard, true);
             MainGrid.Children.Add(boardControl);
 
         }

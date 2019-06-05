@@ -94,6 +94,8 @@ namespace AmazonsGameLib
 
             if (owner == Owner.Player1) Player1MoveCount++;
             else Player2MoveCount++;
+
+            _moves.Clear();
         }
 
         public Board Clone()
