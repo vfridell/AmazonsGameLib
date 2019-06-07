@@ -144,7 +144,7 @@ namespace AmazonsGameLib
         {
             if (IsOutOfBounds(centerPoint)) throw new ArgumentException($"Center point {centerPoint} is out of grid bounds size {Size}");
 
-            HashSet<Point> returnSet = new HashSet<Point>();
+            List<Point> returnSet = new List<Point>();
             foreach(Point delta in centerPoint.GetAdjacentDeltas())
             {
                 Point nextPoint = centerPoint + delta;
@@ -158,6 +158,46 @@ namespace AmazonsGameLib
             return returnSet;
         }
 
+        /// <summary>
+        /// Get all the first Arrows on the grid out from the given center point
+        /// </summary>
+        /// <param name="centerPoint">The origin point to calculate from</param>
+        /// <returns>Set of first arrows encountered from the center point</returns>
+        /// <exception cref="ArgumentException">Invalid centerPoint</exception>
+        public IEnumerable<Point> GetArrowsOutFrom(Point centerPoint)
+        {
+            if (IsOutOfBounds(centerPoint)) throw new ArgumentException($"Center point {centerPoint} is out of grid bounds size {Size}");
+
+            List<Point> returnSet = new List<Point>();
+            foreach(Point delta in centerPoint.GetAdjacentDeltas())
+            {
+                Point nextPoint = centerPoint + delta;
+                while(!IsOutOfBounds(nextPoint) && !PointPieces[nextPoint].Impassible)
+                {
+                    nextPoint = nextPoint + delta;
+                }
+                if(!IsOutOfBounds(nextPoint) && PointPieces[nextPoint] is Arrow)
+                    returnSet.Add(nextPoint);
+            }
+            return returnSet;
+        }
+
+        /// <summary>
+        /// Get all the available reverse moves (remove arrow + move amazon) from the given amazon point
+        /// </summary>
+        /// <param name="centerPoint">The point an amazon is on to reverse</param>
+        /// <returns>Set of available reverse moves</returns>
+        public IEnumerable<Move> GetReverseMovesFromPoint(Point amazonPoint)
+        {
+            HashSet<Move> reverseMoves = new HashSet<Move>();
+            IEnumerable<Point> arrowRemovePoints = GetArrowsOutFrom(amazonPoint);
+            foreach(Point arrowPoint in arrowRemovePoints)
+            {
+                reverseMoves.UnionWith(GetOpenPointsOutFrom(amazonPoint, arrowPoint)
+                                .Select(originPoint => new Move(originPoint, amazonPoint, arrowPoint)));
+            }
+            return reverseMoves;
+        }
 
         /// <summary>
         /// Get all the available amazon moves (move + shoot) from the given point
