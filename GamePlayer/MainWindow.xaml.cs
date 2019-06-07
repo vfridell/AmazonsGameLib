@@ -83,6 +83,8 @@ namespace GamePlayer
         private void OpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             var openFileDialog = new OpenFileDialog();
+            openFileDialog.DefaultExt = "json";
+            openFileDialog.Title = "Open Game";
             if (openFileDialog.ShowDialog(this).Value)
             {
                 string json = "";
