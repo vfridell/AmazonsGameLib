@@ -5,14 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GamePlayer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="400" Width="400">
     <Window.CommandBindings>
         <CommandBinding Command="New" CanExecute="NewCommand_CanExecute" Executed="NewCommand_Executed"/>
+        <CommandBinding Command="Save" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed"/>
+        <CommandBinding Command="Open" CanExecute="OpenCommand_CanExecute" Executed="OpenCommand_Executed"/>
     </Window.CommandBindings>
     <DockPanel>
         <Menu Name="TopMenu" DockPanel.Dock="Top" >
             <MenuItem Header="Game">
                 <MenuItem Header="_New" Command="New"/>
+                <MenuItem Header="_Save" Command="Save"/>
+                <MenuItem Header="_Open" Command="Open"/>
             </MenuItem>
         </Menu>
         <Grid Name="MainGrid">

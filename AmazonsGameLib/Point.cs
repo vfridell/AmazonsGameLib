@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace AmazonsGameLib
@@ -72,6 +73,14 @@ namespace AmazonsGameLib
         {
             if (x > 11 || x < -1 || y > 11 || y < -1) throw new ArgumentException($"We only support point x/y values from -1 through 11. You gave {x},{y}");
             return _pointSet[x+1, y+1];
+        }
+
+        private static Regex _stringPointRegex = new Regex(@"\(([0-9]+),([0-9]+)\)");
+        public static Point Get(string s)
+        {
+            MatchCollection mc = _stringPointRegex.Matches(s);
+            if (mc.Count == 0) throw new ArgumentException($"String is correctly formatted as a point: {s}");
+            return Point.Get(int.Parse(mc[0].Groups[1].Value), int.Parse(mc[0].Groups[2].Value));
         }
     }
 }

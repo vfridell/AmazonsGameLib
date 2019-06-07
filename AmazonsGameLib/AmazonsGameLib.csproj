@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="QuickGraph, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
       <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.dll</HintPath>
     </Reference>
@@ -70,12 +73,15 @@
     <Compile Include="OptimusDeep.cs" />
     <Compile Include="Piece.cs" />
     <Compile Include="PieceGrid.cs" />
+    <Compile Include="PieceGridJsonConverter.cs" />
     <Compile Include="PieceHelpers.cs" />
+    <Compile Include="PieceJsonConverter.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="PointHelpers.cs" />
     <Compile Include="PointPieceArray.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serializer.cs" />
     <Compile Include="SetHelper.cs" />
     <Compile Include="Wall.cs" />
   </ItemGroup>

@@ -23,6 +23,10 @@ namespace GamePlayer
     public partial class AmazonBoardControl : UserControl
     {
         public Board Board { get; set; }
+
+        public delegate void MoveUpdatedHandler(Move move);
+        public event MoveUpdatedHandler MoveUpdated;
+
         public bool IsReadOnly { get; set; }
 
         public AmazonBoardControl(Board board, bool readOnly)
@@ -98,6 +102,7 @@ namespace GamePlayer
             Move move = new Move(_originMovePoint, _amazonMovePoint, p);
             if (!Board.GetAvailableMovesForCurrentPlayer().Contains(move)) throw new Exception($"Invalid move: {move}");
             Board.ApplyMove(move);
+            MoveUpdated?.Invoke(move);
             BoardGrid.Children.Clear();
             BoardGrid.UpdateLayout();
             DrawBoard();

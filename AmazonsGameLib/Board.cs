@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,6 +29,7 @@ namespace AmazonsGameLib
         /// </summary>
         public bool IsPlayable => GetAvailableMovesForCurrentPlayer().Any();
 
+        [JsonIgnore]
         private Dictionary<Owner, IList<Move>> _moves { get; set; } = new Dictionary<Owner, IList<Move>>();
 
         public IEnumerable<Move> GetAvailableMovesForCurrentPlayer() => GetAvailableMoves(CurrentPlayer);

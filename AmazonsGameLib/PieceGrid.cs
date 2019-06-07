@@ -1,4 +1,5 @@
-﻿using QuickGraph;
+﻿using Newtonsoft.Json;
+using QuickGraph;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,8 @@ namespace AmazonsGameLib
     /// The square contains a set of x,y coordinate points with the lower left corner (0, 0)
     /// For convienience, we also keep track of where the Amazons for each player are in separate hashsets
     /// </summary>
+
+    [JsonConverter(typeof(PieceGridJsonConverter))]
     public class PieceGrid
     {
         private Guid _id;
@@ -106,19 +109,19 @@ namespace AmazonsGameLib
         /// <summary>
         /// Size of the square grid
         /// </summary>
-        public readonly int Size;
+        public int Size;
         /// <summary>
         /// All points and pieces on the grid
         /// </summary>
-        public readonly PointSquareArray<Piece> PointPieces;
+        public PointSquareArray<Piece> PointPieces;
         /// <summary>
         /// Player 1 amazon positions (points)
         /// </summary>
-        public readonly ISet<Point> Amazon1Points;
+        public ISet<Point> Amazon1Points;
         /// <summary>
         /// Player 2 amazon positions (points)
         /// </summary>
-        public readonly ISet<Point> Amazon2Points;
+        public ISet<Point> Amazon2Points;
 
         /// <summary>
         /// Get all the contiguous points on the grid from the given center point out to the first impassible
@@ -159,12 +162,14 @@ namespace AmazonsGameLib
         }
 
         /// <summary>
-        /// Get all the first Arrows on the grid out from the given center point
+        /// Get all the Arrows on the grid out from the given center point for the given player
         /// </summary>
         /// <param name="centerPoint">The origin point to calculate from</param>
+        /// <param name="owner">the arrow type to look for. If 'none' just get all arrow types</param>
+        /// <param name="ignoreAmazons">should amazon pieces be ignored as impassible when looking for arrows?</param>
         /// <returns>Set of first arrows encountered from the center point</returns>
         /// <exception cref="ArgumentException">Invalid centerPoint</exception>
-        public IEnumerable<Point> GetArrowsOutFrom(Point centerPoint)
+        public IEnumerable<Point> GetArrowsOutFrom(Point centerPoint, Owner owner, bool ignoreAmazons)
         {
             if (IsOutOfBounds(centerPoint)) throw new ArgumentException($"Center point {centerPoint} is out of grid bounds size {Size}");
 
@@ -172,12 +177,20 @@ namespace AmazonsGameLib
             foreach(Point delta in centerPoint.GetAdjacentDeltas())
             {
                 Point nextPoint = centerPoint + delta;
-                while(!IsOutOfBounds(nextPoint) && !PointPieces[nextPoint].Impassible)
+                while(!IsOutOfBounds(nextPoint) && 
+                    (!PointPieces[nextPoint].Impassible || (ignoreAmazons && PointPieces[nextPoint] is Amazon)))
                 {
                     nextPoint = nextPoint + delta;
                 }
-                if(!IsOutOfBounds(nextPoint) && PointPieces[nextPoint] is Arrow)
-                    returnSet.Add(nextPoint);
+                if (!IsOutOfBounds(nextPoint))
+                {
+                    if (owner == Owner.Player1 && PointPieces[nextPoint] is ArrowPlayer1)
+                        returnSet.Add(nextPoint);
+                    else if (owner == Owner.Player2 && PointPieces[nextPoint] is ArrowPlayer2)
+                        returnSet.Add(nextPoint);
+                    else if(owner == Owner.None && PointPieces[nextPoint] is Arrow)
+                        returnSet.Add(nextPoint);
+                }
             }
             return returnSet;
         }
@@ -187,14 +200,15 @@ namespace AmazonsGameLib
         /// </summary>
         /// <param name="centerPoint">The point an amazon is on to reverse</param>
         /// <returns>Set of available reverse moves</returns>
-        public IEnumerable<Move> GetReverseMovesFromPoint(Point amazonPoint)
+        public IEnumerable<Move> GetReverseMovesFromPoint(Point amazonPoint, Owner owner)
         {
             HashSet<Move> reverseMoves = new HashSet<Move>();
-            IEnumerable<Point> arrowRemovePoints = GetArrowsOutFrom(amazonPoint);
+            IEnumerable<Point> arrowRemovePoints = GetArrowsOutFrom(amazonPoint, owner, false);
             foreach(Point arrowPoint in arrowRemovePoints)
             {
                 reverseMoves.UnionWith(GetOpenPointsOutFrom(amazonPoint, arrowPoint)
                                 .Select(originPoint => new Move(originPoint, amazonPoint, arrowPoint)));
+                // TODO make sure that the points reverse moved to have an available arrow, otherwise it's invalid state!
             }
             return reverseMoves;
         }

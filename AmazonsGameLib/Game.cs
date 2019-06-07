@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,14 +8,17 @@ using System.Threading.Tasks;
 namespace AmazonsGameLib
 {
     public enum GameResult { Incomplete, Player1Won, Player2Won };
+
     public class Game
     {
 
         public List<Board> Boards { get; set; } = new List<Board>();
+        [JsonIgnore]
         public List<Move> CurrentMoves { get; set; }
         public Player Player1 { get; set; }
         public Player Player2 { get; set; }
-        public Board CurrentBoard { get; set; }
+        [JsonIgnore]
+        public Board CurrentBoard => Boards.Last();
         public int BoardSize => CurrentBoard.Size;
         public Owner CurrentPlayer => CurrentBoard.CurrentPlayer;
         public GameResult GetGameResult()
@@ -29,8 +33,8 @@ namespace AmazonsGameLib
         {
             Player1 = player1;
             Player2 = player2;
-            CurrentBoard = new Board(boardSize);
-            Boards.Add(CurrentBoard);
+            Board board = new Board(boardSize);
+            Boards.Add(board);
             CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
         }
 
@@ -38,9 +42,8 @@ namespace AmazonsGameLib
 
         public void ApplyMove(Move move)
         {
-            CurrentBoard = CurrentBoard.Clone();
+            Boards.Add(CurrentBoard.Clone());
             CurrentBoard.ApplyMove(move);
-            Boards.Add(CurrentBoard);
             CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
         }
     }

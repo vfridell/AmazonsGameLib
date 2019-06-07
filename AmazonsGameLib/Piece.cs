@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,12 +9,16 @@ namespace AmazonsGameLib
 {
     public enum PieceName { Open, Amazon, Arrow, Wall };
     public enum Owner { None = 0, Player1 = 1, Player2 = 2 };
+    [JsonConverter(typeof(PieceJsonConverter))]
     public abstract class Piece
     {
         protected Piece() { }
 
+        [JsonIgnore]
         public abstract PieceName Name { get; }
+        [JsonIgnore]
         public abstract bool Impassible { get; }
+        [JsonIgnore]
         public abstract Owner Owner { get; }
 
         protected static Piece[,] _pieces = new Piece[4, 2];
@@ -42,6 +47,27 @@ namespace AmazonsGameLib
             int ownerNum = (int)owner;
             if (ownerNum > 0) ownerNum--;
             return _pieces[(int)pieceName, ownerNum];
+        }
+
+        public static Piece Get(string s)
+        {
+            switch(s)
+            {
+                case "Open":
+                    return _pieces[(int)PieceName.Open, 0];
+                case "AmazonPlayer1":
+                    return _pieces[(int)PieceName.Amazon, 0];
+                case "AmazonPlayer2":
+                    return _pieces[(int)PieceName.Amazon, 1];
+                case "ArrowPlayer1":
+                    return _pieces[(int)PieceName.Arrow, 0];
+                case "ArrowPlayer2":
+                    return _pieces[(int)PieceName.Arrow, 1];
+                case "Wall":
+                    return _pieces[(int)PieceName.Wall, 1];
+                default:
+                    throw new ArgumentException($"Invalid piece name: {s}");
+            }
         }
 
     }
