@@ -54,7 +54,8 @@ namespace GamePlayer
                     else imagePath = "Player2Amazon.png";
                     break;
                 case PieceName.Arrow:
-                    imagePath = "Arrow.png";
+                    if (piece.Owner == Owner.Player1) imagePath = "Arrow1.png";
+                    else imagePath = "Arrow2.png";
                     break;
                 default:
                     return null;
