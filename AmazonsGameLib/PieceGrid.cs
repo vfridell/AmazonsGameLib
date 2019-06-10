@@ -184,9 +184,7 @@ namespace AmazonsGameLib
                 }
                 if (!IsOutOfBounds(nextPoint))
                 {
-                    if (owner == Owner.Player1 && PointPieces[nextPoint] is ArrowPlayer1)
-                        returnSet.Add(nextPoint);
-                    else if (owner == Owner.Player2 && PointPieces[nextPoint] is ArrowPlayer2)
+                    if (owner == PointPieces[nextPoint].Owner)
                         returnSet.Add(nextPoint);
                     else if(owner == Owner.None && PointPieces[nextPoint] is Arrow)
                         returnSet.Add(nextPoint);
