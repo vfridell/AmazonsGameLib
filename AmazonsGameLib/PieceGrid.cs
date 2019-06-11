@@ -166,10 +166,10 @@ namespace AmazonsGameLib
         /// </summary>
         /// <param name="centerPoint">The origin point to calculate from</param>
         /// <param name="owner">the arrow type to look for. If 'none' just get all arrow types</param>
-        /// <param name="ignoreAmazons">should amazon pieces be ignored as impassible when looking for arrows?</param>
+        /// <param name="ignoreImpassible">should impassible pieces be ignored when looking for arrows?</param>
         /// <returns>Set of first arrows encountered from the center point</returns>
         /// <exception cref="ArgumentException">Invalid centerPoint</exception>
-        public IEnumerable<Point> GetArrowsOutFrom(Point centerPoint, Owner owner, bool ignoreAmazons)
+        public IEnumerable<Point> GetArrowsOutFrom(Point centerPoint, Owner owner, bool ignoreImpassible)
         {
             if (IsOutOfBounds(centerPoint)) throw new ArgumentException($"Center point {centerPoint} is out of grid bounds size {Size}");
 
@@ -177,17 +177,16 @@ namespace AmazonsGameLib
             foreach(Point delta in centerPoint.GetAdjacentDeltas())
             {
                 Point nextPoint = centerPoint + delta;
-                while(!IsOutOfBounds(nextPoint) && 
-                    (!PointPieces[nextPoint].Impassible || (ignoreAmazons && PointPieces[nextPoint] is Amazon)))
+                bool keepGoing = true;
+                while(!IsOutOfBounds(nextPoint) && keepGoing)
                 {
+                    keepGoing = !PointPieces[nextPoint].Impassible || ignoreImpassible;
+                    if (PointPieces[nextPoint] is Arrow &&
+                        (owner == PointPieces[nextPoint].Owner || owner == Owner.None))
+                    {
+                        returnSet.Add(nextPoint);
+                    }
                     nextPoint = nextPoint + delta;
-                }
-                if (!IsOutOfBounds(nextPoint))
-                {
-                    if (owner == PointPieces[nextPoint].Owner)
-                        returnSet.Add(nextPoint);
-                    else if(owner == Owner.None && PointPieces[nextPoint] is Arrow)
-                        returnSet.Add(nextPoint);
                 }
             }
             return returnSet;
@@ -206,8 +205,11 @@ namespace AmazonsGameLib
             {
                 reverseMoves.UnionWith(GetOpenPointsOutFrom(amazonPoint, arrowPoint)
                                 .Select(originPoint => new Move(originPoint, amazonPoint, arrowPoint)));
-                // TODO make sure that the points reverse moved to have an available arrow, otherwise it's invalid state!
             }
+            // make sure that the points reverse moved to have an available arrow, otherwise it's invalid state!
+            // That arrow can be anywhere, even behind another impassible piece because it may not be reverse moved till later
+            // this can still lead to invalid states, especially as we get closer to move 1 (the beginning of the game)
+            reverseMoves.RemoveWhere(m => !GetArrowsOutFrom(m.Origin, owner, true).Any());
             return reverseMoves;
         }
 

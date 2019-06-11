@@ -55,6 +55,44 @@ namespace UnitTests
         }
 
         [TestMethod]
+        public void ArrowsOutFromPoint()
+        {
+            HashSet<Point> answer = new HashSet<Point>() { Point.Get(3, 7), Point.Get(4, 6), Point.Get(1, 4), Point.Get(7, 4) };
+            PieceGrid grid = GetPieceGrid();
+            IEnumerable<Point> points = grid.GetArrowsOutFrom(Point.Get(4, 7), Owner.Player2, false);
+            Assert.IsTrue(points.ToSet().SetEquals(answer));
+        }
+
+        [TestMethod]
+        public void ArrowsOutFromPoint2()
+        {
+            HashSet<Point> answer = new HashSet<Point>() { Point.Get(3, 7), Point.Get(4, 6), Point.Get(1, 4), Point.Get(7, 4), Point.Get(2, 7), Point.Get(4, 9), Point.Get(6, 7) };
+            PieceGrid grid = GetPieceGrid();
+            IEnumerable<Point> points = grid.GetArrowsOutFrom(Point.Get(4, 7), Owner.Player2, true);
+            Assert.IsTrue(points.ToSet().SetEquals(answer));
+        }
+
+        [TestMethod]
+        public void ArrowsOutFromPoint3()
+        {
+            HashSet<Point> answer = new HashSet<Point>() { Point.Get(3, 7), Point.Get(4, 6), Point.Get(1, 4), Point.Get(7, 4), Point.Get(2, 7), Point.Get(4, 9), Point.Get(6, 7), Point.Get(3,8), Point.Get(4,8), Point.Get(5,7), Point.Get(7,7), Point.Get(8,7), Point.Get(2,9), Point.Get(9,2) };
+            PieceGrid grid = GetPieceGrid();
+            IEnumerable<Point> points = grid.GetArrowsOutFrom(Point.Get(4, 7), Owner.None, true);
+            Assert.IsTrue(points.ToSet().SetEquals(answer));
+        }
+
+        [TestMethod]
+        public void ReverseMovesFrom()
+        {
+            HashSet<Move> answer = new HashSet<Move>() { new Move(Point.Get(6, 0), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(5, 0), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(9, 1), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(8, 1), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(7, 1), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(4, 1), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(6, 5), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(6, 4), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(6, 3), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(6, 2), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(2, 5), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(3, 4), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(4, 3), Point.Get(6, 1), Point.Get(6, 4)), new Move(Point.Get(5, 2), Point.Get(6, 1), Point.Get(6, 4)), };
+            PieceGrid grid = GetPieceGrid();
+            IEnumerable<Move> moves = grid.GetReverseMovesFromPoint(Point.Get(6, 1), Owner.Player2);
+            string code = GetMoveString(moves);
+            Assert.IsFalse(moves.Any(m => m.Origin.Equals(Point.Get(5, 1))));
+            Assert.IsTrue(moves.ToSet().SetEquals(answer));
+        }
+
+        [TestMethod]
         public void PointsOutFromArrow2()
         {
             HashSet<Point> answer = new HashSet<Point>() { Point.Get(5, 0), Point.Get(4, 1), Point.Get(3, 1), Point.Get(1, 0), Point.Get(2, 1), Point.Get(9, 2), Point.Get(8, 2), Point.Get(7, 2), Point.Get(6, 2), Point.Get(5, 2), Point.Get(4, 2), Point.Get(0, 2), Point.Get(1, 2), Point.Get(2, 2), Point.Get(9, 8), Point.Get(8, 7), Point.Get(7, 6), Point.Get(6, 5), Point.Get(5, 4), Point.Get(4, 3), Point.Get(3, 8), Point.Get(3, 7), Point.Get(3, 6), Point.Get(3, 5), Point.Get(3, 4), Point.Get(3, 3), Point.Get(0, 5), Point.Get(1, 4), Point.Get(2, 3), };
@@ -141,6 +179,27 @@ namespace UnitTests
         }
 
         public string GetPointsString(IEnumerable<Point> points) => points.Select(p => $"Point.Get({p.X},{p.Y}), ").Aggregate("", (s1, ss) => ss += s1);
-        public string GetMoveString(IEnumerable<Move> moves) => moves.Select(m => $"new Move(Point.Get({m.AmazonsPoint.X},{m.AmazonsPoint.Y}), Point.Get({m.ArrowPoint.X},{m.ArrowPoint.Y})), ").Aggregate("", (s1, ss) => ss += s1);
+        public string GetMoveString(IEnumerable<Move> moves) => moves.Select(m => $"new Move(Point.Get({m.Origin.X},{m.Origin.Y}), Point.Get({m.AmazonsPoint.X},{m.AmazonsPoint.Y}), Point.Get({m.ArrowPoint.X},{m.ArrowPoint.Y})), ").Aggregate("", (s1, ss) => ss += s1);
+
+        private PieceGrid GetPieceGrid()
+        {
+            Point[] arrow1Points = { Point.Get(7, 3), Point.Get(1, 6), Point.Get(2, 4), Point.Get(2, 9), Point.Get(3, 8), Point.Get(4, 8), Point.Get(5, 4), Point.Get(5, 5), Point.Get(5, 7), Point.Get(7, 0), Point.Get(7, 7), Point.Get(8, 7), Point.Get(9, 2) };
+            Point[] arrow2Points = { Point.Get(0, 0), Point.Get(0, 5), Point.Get(1, 4), Point.Get(2, 6), Point.Get(2, 7), Point.Get(3, 7), Point.Get(4, 6), Point.Get(4, 9), Point.Get(6, 4), Point.Get(6, 7), Point.Get(1, 2), Point.Get(7, 4), Point.Get(8, 6) };
+            Dictionary<Point, Amazon> amazonsDict = new Dictionary<Point, Amazon> {
+                { Point.Get(2,8), AmazonPlayer1.Get() }, { Point.Get(6,6), AmazonPlayer1.Get() }, { Point.Get(3,3), AmazonPlayer1.Get() }, { Point.Get(7,2), AmazonPlayer1.Get() },
+                { Point.Get(3,9), AmazonPlayer2.Get() }, { Point.Get(4,7), AmazonPlayer2.Get() }, { Point.Get(3,1), AmazonPlayer2.Get() }, { Point.Get(6,1), AmazonPlayer2.Get() }
+            };
+            PieceGrid grid = new PieceGrid(10, amazonsDict);
+            foreach (Point p in arrow1Points)
+            {
+                grid.PointPieces[p] = ArrowPlayer1.Get();
+            }
+            foreach (Point p in arrow2Points)
+            {
+                grid.PointPieces[p] = ArrowPlayer2.Get();
+            }
+            return grid;
+        }
     }
+
 }
