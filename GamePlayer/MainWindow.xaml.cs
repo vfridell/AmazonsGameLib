@@ -48,9 +48,12 @@ namespace GamePlayer
             MainGrid.UpdateLayout();
         }
 
-        private void BoardControl_MoveUpdated(Move move)
+        private void BoardControl_MoveUpdated(Move move, bool reverse)
         {
-            Game.ApplyMove(move);
+            if (reverse)
+                Game.ApplyReverseMove(move);
+            else
+                Game.ApplyMove(move);
         }
 
         private void SaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)

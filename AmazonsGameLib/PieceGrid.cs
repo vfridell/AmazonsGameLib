@@ -210,6 +210,7 @@ namespace AmazonsGameLib
             // That arrow can be anywhere, even behind another impassible piece because it may not be reverse moved till later
             // this can still lead to invalid states, especially as we get closer to move 1 (the beginning of the game)
             reverseMoves.RemoveWhere(m => !GetArrowsOutFrom(m.Origin, owner, true).Any());
+            reverseMoves.RemoveWhere(m => GetArrowsOutFrom(m.Origin, owner, true).Count() == 1 && GetArrowsOutFrom(m.Origin, owner, true).First().Equals(m.ArrowPoint) );
             return reverseMoves;
         }
 
@@ -253,6 +254,33 @@ namespace AmazonsGameLib
             {
                 Amazon2Points.Remove(move.Origin);
                 Amazon2Points.Add(move.AmazonsPoint);
+            }
+            _id = Guid.NewGuid();
+        }
+
+        /// <summary>
+        /// Apply a reverse move to the grid (go backward in time)
+        /// </summary>
+        /// <param name="move">Reverse move to apply</param>
+        /// <exception cref="ArgumentException">Invalid move</exception>
+        public void ApplyReverseMove(Move move)
+        {
+            Amazon movingPiece = PointPieces[move.AmazonsPoint] as Amazon;
+            if (movingPiece == null) throw new ArgumentException($"You can only move Amazons. Tried to move {PointPieces[move.AmazonsPoint].Name}");
+            if (PointPieces[move.ArrowPoint].Name != PieceName.Arrow) throw new ArgumentException($"You can only remove an arrow. Tried to remove {PointPieces[move.ArrowPoint].Name}");
+            if (move.ArrowPoint != move.Origin && PointPieces[move.Origin].Name != PieceName.Open) throw new ArgumentException($"You can only move to an open spot. Tried to move to {PointPieces[move.Origin].Name}");
+            PointPieces[move.AmazonsPoint] = Open.Get();
+            PointPieces[move.ArrowPoint] = Open.Get();
+            PointPieces[move.Origin] = movingPiece;
+            if (movingPiece.Owner == Owner.Player1)
+            {
+                Amazon1Points.Remove(move.AmazonsPoint);
+                Amazon1Points.Add(move.Origin);
+            }
+            else
+            {
+                Amazon2Points.Remove(move.AmazonsPoint);
+                Amazon2Points.Add(move.Origin);
             }
             _id = Guid.NewGuid();
         }

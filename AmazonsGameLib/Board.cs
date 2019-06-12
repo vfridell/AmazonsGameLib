@@ -18,11 +18,21 @@ namespace AmazonsGameLib
             PieceGrid = new PieceGrid(size, PieceHelpers.GetInitialAmazonPositions(size));
         }
 
+        public Board(PieceGrid grid)
+        {
+            PieceGrid = grid;
+            Player1MoveCount = grid.PointPieces.Count(kvp => kvp.Value is ArrowPlayer1);
+            Player2MoveCount = grid.PointPieces.Count(kvp => kvp.Value is ArrowPlayer2);
+        }
+
         public int Size => PieceGrid.Size;
+        [JsonProperty]
         public int Player1MoveCount { get; private set; }
+        [JsonProperty]
         public int Player2MoveCount { get; private set; }
         public bool IsPlayer1Turn => Player1MoveCount == Player2MoveCount;
         public Owner CurrentPlayer => IsPlayer1Turn ? Owner.Player1 : Owner.Player2;
+        public Owner PreviousPlayer => IsPlayer1Turn ? Owner.Player2 : Owner.Player1;
 
         /// <summary>
         /// return false if the board represents a completed game and there is a winner, true otherwise
@@ -33,8 +43,9 @@ namespace AmazonsGameLib
         private Dictionary<Owner, IList<Move>> _moves { get; set; } = new Dictionary<Owner, IList<Move>>();
 
         public IEnumerable<Move> GetAvailableMovesForCurrentPlayer() => GetAvailableMoves(CurrentPlayer);
+        public IEnumerable<Move> GetAvailableReverseMovesForPreviousPlayer() => GetAvailableMoves(PreviousPlayer, true);
 
-        public IEnumerable<Move> GetAvailableMoves(Owner owner = Owner.None)
+        public IEnumerable<Move> GetAvailableMoves(Owner owner = Owner.None, bool reverse = false)
         {
             bool cached = false;
             if (owner == Owner.None) cached = _moves.ContainsKey(Owner.Player1) && _moves.ContainsKey(Owner.Player2);
@@ -48,7 +59,10 @@ namespace AmazonsGameLib
                     List<Move> results = new List<Move>();
                     foreach (Point p in PieceGrid.Amazon1Points)
                     {
-                        results.AddRange(PieceGrid.GetMovesFromPoint(p));
+                        if (reverse)
+                            results.AddRange(PieceGrid.GetReverseMovesFromPoint(p, owner));
+                        else
+                            results.AddRange(PieceGrid.GetMovesFromPoint(p));
                     }
                     _moves[owner] = results;
                 }
@@ -57,7 +71,10 @@ namespace AmazonsGameLib
                     List<Move> results = new List<Move>();
                     foreach (Point p in PieceGrid.Amazon2Points)
                     {
-                        results.AddRange(PieceGrid.GetMovesFromPoint(p));
+                        if (reverse)
+                            results.AddRange(PieceGrid.GetReverseMovesFromPoint(p, owner));
+                        else
+                            results.AddRange(PieceGrid.GetMovesFromPoint(p));
                     }
                     _moves[owner] = results;
                 }
@@ -68,12 +85,18 @@ namespace AmazonsGameLib
                     sourceSet = PieceGrid.Amazon1Points.Union(PieceGrid.Amazon2Points);
                     foreach (Point p in PieceGrid.Amazon1Points)
                     {
-                        results1.AddRange(PieceGrid.GetMovesFromPoint(p));
+                        if (reverse)
+                            results1.AddRange(PieceGrid.GetReverseMovesFromPoint(p, Owner.Player1));
+                        else
+                            results1.AddRange(PieceGrid.GetMovesFromPoint(p));
                     }
                     _moves[Owner.Player1] = results1;
                     foreach (Point p in PieceGrid.Amazon2Points)
                     {
-                        results2.AddRange(PieceGrid.GetMovesFromPoint(p));
+                        if (reverse)
+                            results2.AddRange(PieceGrid.GetReverseMovesFromPoint(p, Owner.Player2));
+                        else
+                            results2.AddRange(PieceGrid.GetMovesFromPoint(p));
                     }
                     _moves[Owner.Player2] = results2;
                 }
@@ -96,6 +119,23 @@ namespace AmazonsGameLib
 
             if (owner == Owner.Player1) Player1MoveCount++;
             else Player2MoveCount++;
+
+            _moves.Clear();
+        }
+
+        public void ApplyReverseMove(Move move)
+        {
+            Owner owner = PreviousPlayer;
+
+            if (PieceGrid.PointPieces[move.AmazonsPoint].Owner != owner)
+                throw new ArgumentException($"Reverse move given doesn't correspond to {owner} previous turn. Move: {move}");
+            if (PieceGrid.PointPieces[move.AmazonsPoint].Name != PieceName.Amazon)
+                throw new ArgumentException($"Reverse move given isn't on an Amazon. You cannot move a {PieceGrid.PointPieces[move.Origin].Name}. Move: {move}");
+
+            PieceGrid.ApplyReverseMove(move);
+
+            if (owner == Owner.Player1) Player1MoveCount--;
+            else Player2MoveCount--;
 
             _moves.Clear();
         }

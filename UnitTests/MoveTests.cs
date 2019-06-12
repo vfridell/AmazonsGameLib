@@ -156,6 +156,47 @@ namespace UnitTests
         }
 
         [TestMethod]
+        public void ApplyReverseMove()
+        {
+            PieceGrid grid = GetPieceGrid();
+            Assert.AreEqual(AmazonPlayer2.Get(), grid.PointPieces[Point.Get(6, 1)]);
+            Assert.AreEqual(ArrowPlayer2.Get(), grid.PointPieces[Point.Get(6, 4)]);
+            Assert.AreEqual(Open.Get(), grid.PointPieces[Point.Get(5, 0)]);
+            Assert.IsTrue(grid.Amazon2Points.Contains(Point.Get(6, 1)));
+            Assert.IsFalse(grid.Amazon2Points.Contains(Point.Get(5, 0)));
+            grid.ApplyReverseMove(new Move(Point.Get(5, 0), Point.Get(6, 1), Point.Get(6, 4)));
+            Assert.AreEqual(Open.Get(), grid.PointPieces[Point.Get(6, 1)]);
+            Assert.AreEqual(AmazonPlayer2.Get(), grid.PointPieces[Point.Get(5, 0)]);
+            Assert.AreEqual(Open.Get(), grid.PointPieces[Point.Get(6, 4)]);
+            Assert.IsTrue(grid.Amazon2Points.Contains(Point.Get(5, 0)));
+            Assert.IsFalse(grid.Amazon2Points.Contains(Point.Get(6, 1)));
+        }
+
+        [TestMethod]
+        public void ApplyReverseMoveBoard()
+        {
+            Board board = new Board(GetPieceGrid());
+            Assert.AreEqual(13, board.Player1MoveCount);
+            Assert.AreEqual(13, board.Player2MoveCount);
+            Assert.AreEqual(Owner.Player2, board.PreviousPlayer);
+            Assert.IsTrue(board.IsPlayer1Turn);
+            board.ApplyReverseMove(new Move(Point.Get(5, 0), Point.Get(6, 1), Point.Get(6, 4)));
+            Assert.IsFalse(board.IsPlayer1Turn);
+            Assert.AreEqual(Owner.Player1, board.PreviousPlayer);
+            Assert.AreEqual(13, board.Player1MoveCount);
+            Assert.AreEqual(12, board.Player2MoveCount);
+        }
+
+        [TestMethod]
+        public void AllReverseMoves()
+        {
+            Board board = new Board(GetPieceGrid());
+            IEnumerable<Move> moves = board.GetAvailableReverseMovesForPreviousPlayer();
+            string code = GetMoveString(moves);
+            Assert.AreEqual(71, moves.Count());
+        }
+
+        [TestMethod]
         public void BeginGame()
         {
             Game game = new Game();
