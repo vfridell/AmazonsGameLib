@@ -22,7 +22,7 @@ namespace GamePlayer
     /// </summary>
     public partial class AmazonBoardControl : UserControl
     {
-        public Board Board { get; set; }
+        public Board Board { get; private set; }
 
         public delegate void MoveUpdatedHandler(Move move, bool reverse);
         public event MoveUpdatedHandler MoveUpdated;
@@ -33,6 +33,12 @@ namespace GamePlayer
         {
             InitializeComponent();
             IsReadOnly = readOnly;
+            Board = board;
+            DrawBoard();
+        }
+
+        public void SetBoard(Board board)
+        {
             Board = board;
             DrawBoard();
         }

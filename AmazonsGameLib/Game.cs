@@ -47,6 +47,12 @@ namespace AmazonsGameLib
             CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
         }
 
+        public void UndoLastMove()
+        {
+            Boards.Remove(CurrentBoard);
+            CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
+        }
+
         public void ApplyReverseMove(Move move)
         {
             Boards.Add(CurrentBoard.Clone());

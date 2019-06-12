@@ -26,6 +26,9 @@ namespace GamePlayer
     {
 
         public Game Game { get; set; }
+        public Stack<(Move, bool)> MoveHistoryStack = new Stack<(Move, bool)>();
+        public Stack<(Move, bool)> MoveUndoHistoryStack = new Stack<(Move, bool)>();
+        public AmazonBoardControl BoardControl { get; set; }
 
         public MainWindow()
         {
@@ -42,14 +45,16 @@ namespace GamePlayer
             MainGrid.Children.Clear();
             Game = new Game();
             Game.Begin(null, null, 10);
-            AmazonBoardControl boardControl = new AmazonBoardControl(Game.CurrentBoard.Clone(), false);
-            boardControl.MoveUpdated += BoardControl_MoveUpdated;
-            MainGrid.Children.Add(boardControl);
+            MoveHistoryStack.Clear();
+            BoardControl = new AmazonBoardControl(Game.CurrentBoard.Clone(), false);
+            BoardControl.MoveUpdated += BoardControl_MoveUpdated;
+            MainGrid.Children.Add(BoardControl);
             MainGrid.UpdateLayout();
         }
 
         private void BoardControl_MoveUpdated(Move move, bool reverse)
         {
+            MoveHistoryStack.Push((move, reverse));
             if (reverse)
                 Game.ApplyReverseMove(move);
             else
@@ -58,7 +63,7 @@ namespace GamePlayer
 
         private void SaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = Game != null && MainGrid.Children.OfType<AmazonBoardControl>().Any();
+            e.CanExecute = Game != null && BoardControl != null;
         }
 
         private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -102,11 +107,39 @@ namespace GamePlayer
                     return;
                 }
                 Game = openGame;
-                AmazonBoardControl boardControl = new AmazonBoardControl(Game.CurrentBoard.Clone(), false);
-                boardControl.MoveUpdated += BoardControl_MoveUpdated;
-                MainGrid.Children.Add(boardControl);
+                BoardControl = new AmazonBoardControl(Game.CurrentBoard.Clone(), false);
+                BoardControl.MoveUpdated += BoardControl_MoveUpdated;
+                MainGrid.Children.Clear();
+                MainGrid.Children.Add(BoardControl);
                 MainGrid.UpdateLayout();
             }
+        }
+
+        private void UndoCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = MoveHistoryStack.Count > 0;
+        }
+
+        private void UndoCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            (Move move, bool reverse) = MoveHistoryStack.Pop();
+            MoveUndoHistoryStack.Push((move, reverse));
+            Game.UndoLastMove();
+            BoardControl.SetBoard(Game.CurrentBoard.Clone());
+        }
+
+        private void RedoCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = MoveUndoHistoryStack.Count > 0;
+        }
+
+        private void RedoCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            (Move move, bool reverse) = MoveUndoHistoryStack.Pop();
+            MoveHistoryStack.Push((move, reverse));
+            if (reverse) Game.ApplyReverseMove(move);
+            else Game.ApplyMove(move);
+            BoardControl.SetBoard(Game.CurrentBoard);
         }
     }
 }

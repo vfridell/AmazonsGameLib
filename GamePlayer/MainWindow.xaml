@@ -10,6 +10,8 @@
         <CommandBinding Command="New" CanExecute="NewCommand_CanExecute" Executed="NewCommand_Executed"/>
         <CommandBinding Command="Save" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed"/>
         <CommandBinding Command="Open" CanExecute="OpenCommand_CanExecute" Executed="OpenCommand_Executed"/>
+        <CommandBinding Command="Undo" CanExecute="UndoCommand_CanExecute" Executed="UndoCommand_Executed"/>
+        <CommandBinding Command="Redo" CanExecute="RedoCommand_CanExecute" Executed="RedoCommand_Executed"/>
     </Window.CommandBindings>
     <DockPanel>
         <Menu Name="TopMenu" DockPanel.Dock="Top" >
@@ -17,6 +19,9 @@
                 <MenuItem Header="_New" Command="New"/>
                 <MenuItem Header="_Save" Command="Save"/>
                 <MenuItem Header="_Open" Command="Open"/>
+                <Separator/>
+                <MenuItem Header="_Undo" Command="Undo"/>
+                <MenuItem Header="_Redo" Command="Redo"/>
             </MenuItem>
         </Menu>
         <Grid Name="MainGrid">
