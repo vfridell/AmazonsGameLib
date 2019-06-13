@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ConsoleGame
@@ -68,7 +69,11 @@ namespace ConsoleGame
 
                 if (game.IsComplete()) continue;
 
-                Move bestMove = optimusDeep.PickBestMove(game.CurrentBoard);
+                var cancellationTokenSrc = new CancellationTokenSource();
+                var bestMoveTask = Task<Move>.Run(() => optimusDeep.PickBestMoveAsync(game.CurrentBoard, cancellationTokenSrc.Token));
+                Task.Delay(1000).Wait();
+                if (!bestMoveTask.IsCompleted) cancellationTokenSrc.Cancel();
+                Move bestMove = bestMoveTask.Result;
                 game.ApplyMove(bestMove);
 
                 analysisGraph.BuildAnalysis(game.CurrentBoard.PieceGrid, game.CurrentPlayer);

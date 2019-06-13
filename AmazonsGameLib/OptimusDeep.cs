@@ -15,6 +15,7 @@ namespace AmazonsGameLib
         private IBoardAnalyzer _analyzer;
         public readonly double MinValue = double.MinValue;
         public readonly double MaxValue = double.MaxValue;
+        public Move BestMove { get; set; }
 
         public OptimusDeep(int depth, IBoardAnalyzer boardAnalyzer)
         {
@@ -51,17 +52,15 @@ namespace AmazonsGameLib
         {
             var cancelSource = new CancellationTokenSource();
             var initialContext = new NegamaxContext(null, board, 0, false);
-            Move bestMove = NegamaxRoot(initialContext, MinValue, MaxValue, _depth, isPlayer1 ? 1 : -1, cancelSource.Token);
+            Move bestMove = NegamaxRoot(initialContext, MinValue, MaxValue, _depth, isPlayer1 ? 1 : -1, cancelSource.Token).Result;
             return bestMove;
         }
 
-        public Task<Move> PickBestMoveAsync(Board board, CancellationToken aiCancelToken)
+        public async Task<Move> PickBestMoveAsync(Board board, CancellationToken aiCancelToken)
         {
-            return Task.Run(() => {
-                var initialContext = new NegamaxContext(null, board, 0, false);
-                Move bestMove = NegamaxRoot(initialContext, MinValue, MaxValue, _depth, isPlayer1 ? 1 : -1, aiCancelToken);
-                return bestMove;
-            });
+            var initialContext = new NegamaxContext(null, board, 0, false);
+            Move bestMove = await NegamaxRoot(initialContext, MinValue, MaxValue, _depth, isPlayer1 ? 1 : -1, aiCancelToken);
+            return bestMove;
         }
 
         public void BeginNewGame(Owner playingAs, int boardSize)
@@ -69,17 +68,16 @@ namespace AmazonsGameLib
             PlayingAs = playingAs;
         }
 
-        private Move NegamaxRoot(NegamaxContext context, double alpha, double beta, int depth, int color, CancellationToken aiCancelToken)
+        private async Task<Move> NegamaxRoot(NegamaxContext context, double alpha, double beta, int depth, int color, CancellationToken aiCancelToken)
         {
-            aiCancelToken.ThrowIfCancellationRequested();
-
-            IEnumerable<NegamaxContext> orderedAnalysis = GetMoves(context.Board, color, aiCancelToken);
+            IEnumerable<NegamaxContext> orderedAnalysis = GetSortedMoves(context.Board, color, aiCancelToken);
             double bestScore = MinValue;
             Move localBestMove = orderedAnalysis.First().Move;
 
             foreach (var nextContext in orderedAnalysis)
             {
-                double score = -Negamax(nextContext, -beta, -alpha, depth - 1, -color, aiCancelToken);
+                if (aiCancelToken.IsCancellationRequested) return localBestMove;
+                double score = -(await Negamax(nextContext, -beta, -alpha, depth - 1, -color, aiCancelToken));
                 if (score > bestScore) localBestMove = nextContext.Move;
                 bestScore = Math.Max(bestScore, score);
                 alpha = Math.Max(alpha, score);
@@ -90,10 +88,9 @@ namespace AmazonsGameLib
             return localBestMove;
         }
 
-        private double Negamax(NegamaxContext context, double alpha, double beta, int depth, int color, CancellationToken aiCancelToken)
+        private async Task<double> Negamax(NegamaxContext context, double alpha, double beta, int depth, int color, CancellationToken aiCancelToken)
         {
-            aiCancelToken.ThrowIfCancellationRequested();
-            if (depth == 0 || !context.Board.GetAvailableMovesForCurrentPlayer().Any())
+            if (depth == 0 || !context.Board.IsPlayable)
             {
                 if(context.ScoreCalculated) return context.Score * color;
                 else
@@ -102,16 +99,18 @@ namespace AmazonsGameLib
                 }
             }
 
-            IEnumerable<NegamaxContext> orderedAnalysis = GetMoves(context.Board, color, aiCancelToken);
+            IEnumerable<NegamaxContext> orderedAnalysis = GetSortedMoves(context.Board, color, aiCancelToken);
             double bestScore = MinValue;
 
             foreach (var nextContext in orderedAnalysis)
             {
-                double score = -Negamax(nextContext, -beta, -alpha, depth - 1, -color, aiCancelToken);
+                double score = -(await Negamax(nextContext, -beta, -alpha, depth - 1, -color, aiCancelToken));
                 bestScore = Math.Max(bestScore, score);
                 alpha = Math.Max(alpha, score);
                 if (alpha >= beta)
                     break;
+
+                if (aiCancelToken.IsCancellationRequested) return bestScore;
             };
 
             return bestScore;
@@ -130,10 +129,13 @@ namespace AmazonsGameLib
 
         private IEnumerable<NegamaxContext> GetSortedMoves(Board board, int color, CancellationToken aiCancelToken)
         {
+            /*
             var advantageDict = new SortedDictionary<double, HashSet<NegamaxContext>>();
             var allMoves = board.GetAvailableMovesForCurrentPlayer();
             foreach (Move move in allMoves)
             {
+                if (aiCancelToken.IsCancellationRequested) yield break;
+
                 var futureBoard = Board.ComputeFutureBoard(board, move);
                 double currentAdvantage = _analyzer.Analyze(futureBoard).player1Advantage;
                 if (!advantageDict.ContainsKey(currentAdvantage))
@@ -142,16 +144,20 @@ namespace AmazonsGameLib
             }
             foreach (var kvp in color == 1 ? advantageDict.Reverse() : advantageDict)
             {
-                foreach (var pair in kvp.Value) yield return pair;
+                foreach (var pair in kvp.Value)
+                {
+                    if (aiCancelToken.IsCancellationRequested) yield break;
+                    else yield return pair;
+                }
             }
+           */
 
-            /*
             var advantageBag = new ConcurrentBag<NegamaxContext>();
             var allMoves = board.GetAvailableMovesForCurrentPlayer();
             Parallel.ForEach(allMoves, (move, parallelLoopState) =>
             {
-                if (parallelLoopState.ShouldExitCurrentIteration) parallelLoopState.Stop();
-                if (aiCancelToken.IsCancellationRequested) parallelLoopState.Stop();
+                if (aiCancelToken.IsCancellationRequested) parallelLoopState.Break();
+                if (parallelLoopState.ShouldExitCurrentIteration) return;
                 var futureBoard = Board.ComputeFutureBoard(board, move);
                 double currentAdvantage = _analyzer.Analyze(futureBoard).player1Advantage;
                 advantageBag.Add(new NegamaxContext(move, futureBoard, currentAdvantage, true));
@@ -163,7 +169,6 @@ namespace AmazonsGameLib
             {
                 yield return context;
             }
-            */
         }
 
 

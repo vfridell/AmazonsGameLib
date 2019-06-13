@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using AmazonsGameLib;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -49,13 +50,13 @@ namespace UnitTests
             Game game = new Game();
             game.Begin(null, null, 10);
 
-            foreach (Move move in game.CurrentMoves)
-            {
-                var analysisGraph = new AnalysisGraph();
-                Board nextBoard = game.CurrentBoard.Clone();
-                nextBoard.ApplyMove(move);
-                analysisGraph.BuildAnalysis(nextBoard.PieceGrid, Owner.Player1);
-            }
+            Parallel.ForEach(game.CurrentMoves, (move) =>
+           {
+               var analysisGraph = new AnalysisGraph();
+               Board nextBoard = game.CurrentBoard.Clone();
+               nextBoard.ApplyMove(move);
+               analysisGraph.BuildAnalysis(nextBoard.PieceGrid, Owner.Player1);
+           });
         }
 
         [TestMethod]
@@ -64,13 +65,13 @@ namespace UnitTests
             Game game = new Game();
             game.Begin(null, null, 10);
 
-            foreach (Move move in game.CurrentMoves)
-            {
-                var analysisGraph = new AnalysisGraphLite();
-                Board nextBoard = game.CurrentBoard.Clone();
-                nextBoard.ApplyMove(move);
-                analysisGraph.BuildAnalysis(nextBoard.PieceGrid, Owner.Player1);
-            }
+            Parallel.ForEach(game.CurrentMoves, (move) =>
+           {
+               var analysisGraph = new AnalysisGraphLite();
+               Board nextBoard = game.CurrentBoard.Clone();
+               nextBoard.ApplyMove(move);
+               analysisGraph.BuildAnalysis(nextBoard.PieceGrid, Owner.Player1);
+           });
         }
 
         [TestMethod]
@@ -120,6 +121,15 @@ namespace UnitTests
             Assert.AreEqual("0.87", $"{analysisGraph.T:0.00}");
             Assert.AreEqual("17.51", $"{analysisGraph.M:0.00}");
             Assert.AreEqual("18.38", $"{analysisGraph.T + analysisGraph.M:0.00}");
+        }
+
+        [TestMethod]
+        public void EvaluationValuesLite()
+        {
+            PieceGrid grid = GetPieceGrid();
+            var analysisGraph = new AnalysisGraphLite();
+            analysisGraph.BuildAnalysis(grid, Owner.Player1);
+            Assert.AreEqual("8.40", $"{analysisGraph.T1:0.00}");
         }
 
         private PieceGrid GetPieceGrid()

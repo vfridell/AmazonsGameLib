@@ -61,7 +61,6 @@
     <Compile Include="AnalysisGraph.cs" />
     <Compile Include="Arrow.cs" />
     <Compile Include="Board.cs" />
-    <Compile Include="BoardHistories.cs" />
     <Compile Include="DisposableAction.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="IAnalysisResult.cs" />

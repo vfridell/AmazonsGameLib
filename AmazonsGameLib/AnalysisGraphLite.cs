@@ -29,10 +29,6 @@ namespace AmazonsGameLib
         /// Minimum queen move distances for player 2 at each open, reachable point on the PieceGrid
         /// </summary>
         public PointSquareArray<double?> Player2QueenMinDistances;
-        /// <summary>
-        /// Queen move distance for each specific amazon to each other open, reachable point on the PieceGrid
-        /// </summary>
-        public PointSquareArray<PointSquareArray<double>> SpecificQueenDistances;
 
         /// <summary>
         /// Sum of local queen move advantages for each player. Greater distances have no affect on the local score
@@ -51,9 +47,6 @@ namespace AmazonsGameLib
             LastAnalyzedPieceGridId = pieceGrid.Id;
 
             LocalAdvantages = new PointSquareArray<LocalAdvantage>(pieceGrid.Size);
-            SpecificQueenDistances = new PointSquareArray<PointSquareArray<double>>(pieceGrid.Size);
-
-            SpecificQueenDistances.Clear();
 
             Player1QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player1);
             Player2QueenMinDistances = BuildDistancesDictionary(pieceGrid, Owner.Player2);
@@ -90,8 +83,7 @@ namespace AmazonsGameLib
         {
             ISet<Point> visited = new HashSet<Point>();
             Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
-            foreach (Point p in pieceGrid.GetOpenPointsOutFrom(point).Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                                       !pieceGrid.PointPieces[adj].Impassible))
+            foreach (Point p in pieceGrid.GetOpenPointsOutFrom(point))
             {
                 toVisit.Enqueue((p, 1));
             }
@@ -102,13 +94,9 @@ namespace AmazonsGameLib
                 if (visited.Contains(p.Item1)) continue;
                 if (result[p.Item1].HasValue) result[p.Item1] = Math.Min(p.Item2, result[p.Item1].Value);
                 else result.Add(p.Item1, p.Item2);
-                if (SpecificQueenDistances[point] == null) SpecificQueenDistances.Add(point, new PointSquareArray<double>(pieceGrid.Size));
-                SpecificQueenDistances[point].Add(p.Item1, p.Item2);
                 visited.Add(p.Item1);
                 foreach (Point pNext in pieceGrid.GetOpenPointsOutFrom(p.Item1)
-                                               .Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                             !pieceGrid.PointPieces[adj].Impassible &&
-                                                             !visited.Contains(adj)))
+                                               .Where(adj => !visited.Contains(adj)))
                 {
                     toVisit.Enqueue((pNext, p.Item2 + 1));
                 }

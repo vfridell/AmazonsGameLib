@@ -270,8 +270,7 @@ namespace AmazonsGameLib
         {
             ISet<Point> visited = new HashSet<Point>();
             Queue<(Point, double)> toVisit = new Queue<(Point, double)>();
-            foreach (Point p in pieceGrid.GetOpenPointsOutFrom(point).Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                                       !pieceGrid.PointPieces[adj].Impassible))
+            foreach (Point p in pieceGrid.GetOpenPointsOutFrom(point))
             {
                 toVisit.Enqueue((p, 1));
             }
@@ -286,9 +285,7 @@ namespace AmazonsGameLib
                 SpecificQueenDistances[point].Add(p.Item1, p.Item2);
                 visited.Add(p.Item1);
                 foreach (Point pNext in pieceGrid.GetOpenPointsOutFrom(p.Item1)
-                                               .Where(adj => !pieceGrid.IsOutOfBounds(adj) &&
-                                                             !pieceGrid.PointPieces[adj].Impassible &&
-                                                             !visited.Contains(adj)))
+                                               .Where(adj => !visited.Contains(adj)))
                 {
                     toVisit.Enqueue((pNext, p.Item2 + 1));
                 }
@@ -323,9 +320,10 @@ namespace AmazonsGameLib
 
         public IAnalysisResult Analyze(Board board)
         {
-            BuildAnalysis(board.PieceGrid, board.CurrentPlayer);
+            AnalysisGraph ag = new AnalysisGraph();
+            ag.BuildAnalysis(board.PieceGrid, board.CurrentPlayer);
 
-            var result = new AnalysisGraphResult() { player1Advantage = T + M };
+            var result = new AnalysisGraphResult() { player1Advantage = ag.T + ag.M };
             if (board.GetAvailableMovesForCurrentPlayer().Any()) result.gameResult = GameResult.Incomplete;
             else if (board.CurrentPlayer == Owner.Player1) result.gameResult = GameResult.Player2Won;
             else result.gameResult = GameResult.Player1Won;
