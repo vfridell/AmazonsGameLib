@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -28,6 +29,10 @@ namespace GamePlayer
         public Game Game { get; set; }
         public Stack<(Move, bool)> MoveHistoryStack = new Stack<(Move, bool)>();
         public Stack<(Move, bool)> MoveUndoHistoryStack = new Stack<(Move, bool)>();
+        AnalysisGraph analysisGraph = new AnalysisGraph();
+        OptimusDeep optimusDeep;
+        Owner ComputerPlaying = AmazonsGameLib.Owner.None;
+
         public AmazonBoardControl BoardControl { get; set; }
 
         public MainWindow()
@@ -141,5 +146,30 @@ namespace GamePlayer
             else Game.ApplyMove(move);
             BoardControl.SetBoard(Game.CurrentBoard);
         }
+
+        private void PlayCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Game != null && BoardControl != null && !Game.IsComplete();
+        }
+
+        private void PlayCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            optimusDeep = new OptimusDeep(3, analysisGraph);
+            optimusDeep.BeginNewGame(Game.CurrentPlayer, 10);
+            ComputerPlaying = Game.CurrentPlayer;
+
+            Task.Run(() =>
+            {
+                var cancellationTokenSrc = new CancellationTokenSource(1000);
+                var bestMoveTask = Task<Move>.Run(() => optimusDeep.PickBestMoveAsync(Game.CurrentBoard, cancellationTokenSrc.Token));
+                return bestMoveTask.Result;
+            }).ContinueWith((t) =>
+            {
+                Game.ApplyMove(t.Result);
+                BoardControl.SetBoard(Game.CurrentBoard);
+            });
+        }
+
+
     }
 }
