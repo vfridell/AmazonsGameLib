@@ -158,15 +158,23 @@ namespace GamePlayer
             optimusDeep.BeginNewGame(Game.CurrentPlayer, 10);
             ComputerPlaying = Game.CurrentPlayer;
 
+            Cursor orgCursor = Cursor;
+            Cursor = Cursors.Wait;
+            BoardControl.SetReadOnlyTillNextDraw();
             Task.Run(() =>
             {
-                var cancellationTokenSrc = new CancellationTokenSource(1000);
+                var cancellationTokenSrc = new CancellationTokenSource(9000);
                 var bestMoveTask = Task<Move>.Run(() => optimusDeep.PickBestMoveAsync(Game.CurrentBoard, cancellationTokenSrc.Token));
                 return bestMoveTask.Result;
             }).ContinueWith((t) =>
             {
-                Game.ApplyMove(t.Result);
-                BoardControl.SetBoard(Game.CurrentBoard);
+                Move move = t.Result;
+                this.Dispatcher.Invoke(() =>
+                {
+                    BoardControl.ApplyMove(move, false);
+                    Cursor = orgCursor;
+                });
+
             });
         }
 

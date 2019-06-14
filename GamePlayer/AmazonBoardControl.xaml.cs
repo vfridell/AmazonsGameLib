@@ -43,6 +43,23 @@ namespace GamePlayer
             DrawBoard();
         }
 
+        public void ApplyMove(Move move, bool reverse)
+        {
+            Board.ApplyMove(move);
+            MoveUpdated?.Invoke(move, reverse);
+            BoardGrid.Children.Clear();
+            BoardGrid.UpdateLayout();
+            DrawBoard();
+            BoardGrid.UpdateLayout();
+        }
+
+        public void SetReadOnlyTillNextDraw()
+        {
+            IsReadOnly = true;
+            DrawBoard();
+            IsReadOnly = false;
+        }
+
         private void DrawBoard()
         {
             foreach (var kvp in Board.PieceGrid.PointPieces)
