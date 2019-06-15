@@ -38,7 +38,7 @@ namespace AmazonsGameLib
             CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
         }
 
-        public bool IsComplete() => !CurrentMoves.Any();
+        public bool IsComplete() => !(CurrentMoves?.Any() ?? true );
 
         public void ApplyMove(Move move)
         {

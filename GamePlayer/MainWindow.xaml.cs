@@ -29,8 +29,6 @@ namespace GamePlayer
         public Game Game { get; set; }
         public Stack<(Move, bool)> MoveHistoryStack = new Stack<(Move, bool)>();
         public Stack<(Move, bool)> MoveUndoHistoryStack = new Stack<(Move, bool)>();
-        AnalysisGraph analysisGraph = new AnalysisGraph();
-        OptimusDeep optimusDeep;
         Owner ComputerPlaying = AmazonsGameLib.Owner.None;
 
         public AmazonBoardControl BoardControl { get; set; }
@@ -154,7 +152,8 @@ namespace GamePlayer
 
         private void PlayCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            optimusDeep = new OptimusDeep(3, analysisGraph);
+            AnalysisGraph analysisGraph = new AnalysisGraph();
+            var optimusDeep = new OptimusDeep(3, analysisGraph);
             optimusDeep.BeginNewGame(Game.CurrentPlayer, 10);
             ComputerPlaying = Game.CurrentPlayer;
 
@@ -164,12 +163,12 @@ namespace GamePlayer
             Task.Run(() =>
             {
                 var cancellationTokenSrc = new CancellationTokenSource(9000);
-                var bestMoveTask = Task<Move>.Run(() => optimusDeep.PickBestMoveAsync(Game.CurrentBoard, cancellationTokenSrc.Token));
+                var bestMoveTask = optimusDeep.PickBestMoveAsync(Game.CurrentBoard, cancellationTokenSrc.Token);
                 return bestMoveTask.Result;
             }).ContinueWith((t) =>
             {
                 Move move = t.Result;
-                this.Dispatcher.Invoke(() =>
+                Dispatcher.Invoke(() =>
                 {
                     BoardControl.ApplyMove(move, false);
                     Cursor = orgCursor;
@@ -177,7 +176,6 @@ namespace GamePlayer
 
             });
         }
-
 
     }
 }
