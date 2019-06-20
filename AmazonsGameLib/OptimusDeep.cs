@@ -129,29 +129,6 @@ namespace AmazonsGameLib
 
         private IEnumerable<NegamaxContext> GetSortedMoves(Board board, int color, CancellationToken aiCancelToken)
         {
-            /*
-            var advantageDict = new SortedDictionary<double, HashSet<NegamaxContext>>();
-            var allMoves = board.GetAvailableMovesForCurrentPlayer();
-            foreach (Move move in allMoves)
-            {
-                if (aiCancelToken.IsCancellationRequested) yield break;
-
-                var futureBoard = Board.ComputeFutureBoard(board, move);
-                double currentAdvantage = _analyzer.Analyze(futureBoard).player1Advantage;
-                if (!advantageDict.ContainsKey(currentAdvantage))
-                    advantageDict.Add(currentAdvantage, new HashSet<NegamaxContext>());
-                advantageDict[currentAdvantage].Add(new NegamaxContext(move, futureBoard, currentAdvantage, true));
-            }
-            foreach (var kvp in color == 1 ? advantageDict.Reverse() : advantageDict)
-            {
-                foreach (var pair in kvp.Value)
-                {
-                    if (aiCancelToken.IsCancellationRequested) yield break;
-                    else yield return pair;
-                }
-            }
-           */
-
             var advantageBag = new ConcurrentBag<NegamaxContext>();
             var allMoves = board.GetAvailableMovesForCurrentPlayer();
             Parallel.ForEach(allMoves, (move, parallelLoopState) =>
@@ -170,8 +147,6 @@ namespace AmazonsGameLib
                 yield return context;
             }
         }
-
-
 
         private string _name;
         public override string Name
