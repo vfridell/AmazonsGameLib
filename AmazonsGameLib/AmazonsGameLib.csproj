@@ -69,6 +69,7 @@
     <Compile Include="Move.cs" />
     <Compile Include="NegamaxContext.cs" />
     <Compile Include="Open.cs" />
+    <Compile Include="TacoCat.cs" />
     <Compile Include="OptimusDeep.cs" />
     <Compile Include="Piece.cs" />
     <Compile Include="PieceGrid.cs" />

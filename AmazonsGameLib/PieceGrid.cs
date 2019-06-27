@@ -286,6 +286,35 @@ namespace AmazonsGameLib
         }
 
         /// <summary>
+        /// Return a list of upper-left points for empty 2x2 blocks on the grid.
+        /// </summary>
+        /// <returns>list of upper left points for all empty 2x2 squares</returns>
+        public IEnumerable<Point> GetEmpyTwoByTwos(bool ignoreAmazons=true)
+        {
+            for (int x = 0; x < Size-1; x++)
+            {
+                for (int y = 0; y < Size-1; y++)
+                {
+                    Point p = Point.Get(x, y);
+                    Piece piece = PointPieces[p];
+                    if(!piece.Impassible || (ignoreAmazons && piece is Amazon))
+                    {
+                        Piece r = PointPieces[Point.Get(x + 1, y)];
+                        Piece d = PointPieces[Point.Get(x, y + 1)];
+                        Piece rd = PointPieces[Point.Get(x + 1, y + 1)];
+
+                        if( (!r.Impassible || (ignoreAmazons && r is Amazon)) &&
+                            (!d.Impassible || (ignoreAmazons && d is Amazon)) &&
+                            (!rd.Impassible || (ignoreAmazons && rd is Amazon)))
+                        {
+                            yield return p;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Check if a point is off the grid
         /// </summary>
         /// <param name="point">Point to check</param>

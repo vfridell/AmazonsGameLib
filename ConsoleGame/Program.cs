@@ -1,6 +1,7 @@
 ﻿using AmazonsGameLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,10 +15,68 @@ namespace ConsoleGame
         {
             //RenderSpecificState();
             //PlayRandomGame();
-            PlayRandomVsOptimusDeepGame();
+            //PlayRandomVsOptimusDeepGame();
+            PlayOneHundredGames();
+            PlayFourRandomMovesAhead();
         }
 
-        static void ShowMobilityScorePairs()
+        public static void PlayFourRandomMovesAhead()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            AnalysisGraph analysisGraph = new AnalysisGraph();
+            List<(Game, IAnalysisResult)> games = new List<(Game, IAnalysisResult)>();
+            for (int i = 0; i < 100; i++)
+            {
+                Random rnd = new Random();
+                Game game = new Game();
+                game.Begin(null, null, 10);
+                int n = 4;
+                while (n > 0 && !game.IsComplete())
+                {
+                    int randomMoveNum = rnd.Next(0, game.CurrentMoves.Count - 1);
+                    game.ApplyMove(game.CurrentMoves.ElementAt(randomMoveNum));
+                    n--;
+                }
+
+                games.Add((game, analysisGraph.Analyze(game.CurrentBoard)));
+            }
+            sw.Stop();
+
+            Console.WriteLine($"Elapsed: {sw.Elapsed}");
+
+        }
+
+        public static void PlayOneHundredGames()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            List<Game> games = new List<Game>();
+            for (int i = 0; i < 100; i++)
+            {
+                Random rnd = new Random();
+                Game game = new Game();
+                game.Begin(null, null, 10);
+                while (!game.IsComplete())
+                {
+                    int randomMoveNum = rnd.Next(0, game.CurrentMoves.Count - 1);
+                    game.ApplyMove(game.CurrentMoves.ElementAt(randomMoveNum));
+                }
+                games.Add(game);
+            }
+            sw.Stop();
+
+            Console.WriteLine($"Elapsed: {sw.Elapsed}");
+
+            double player1Wins = games.Count(g => g.GetGameResult() == GameResult.Player1Won);
+            double player2Wins = games.Count(g => g.GetGameResult() == GameResult.Player2Won);
+
+            Console.WriteLine($"{player1Wins}/{player2Wins} = {player1Wins / player2Wins:0.00}");
+
+        }
+
+static void ShowMobilityScorePairs()
         {
             Game game = new Game();
             game.Begin(null, null, 10);
