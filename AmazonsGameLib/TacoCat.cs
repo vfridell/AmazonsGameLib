@@ -155,32 +155,46 @@ namespace AmazonsGameLib
 
         public Board ImagineWinningBoard(Board board)
         {
-            List<Point> twoByTwos = board.PieceGrid.GetEmpyTwoByTwos().ToList();
-            List<Point> pockets = new List<Point>();
+            AnalysisGraph analysis = new AnalysisGraph();
+            analysis.BuildAnalysis(board.PieceGrid, board.CurrentPlayer);
+            if (analysis.W == 0) return null;
+
             Random rnd = new Random();
-            while (pockets.Count < 7)
+            List<Point> twoByTwos = board.PieceGrid.GetEmpyTwoByTwos().ToList();
+            if (twoByTwos.Count < 8) return null;
+
+            twoByTwos.Shuffle(rnd);
+            List<Point> pockets = new List<Point>();
+            List<Point> fill = new List<Point>();
+            while (pockets.Count < 8)
             {
                 foreach (Point p in twoByTwos)
                 {
-                    if(rnd.NextDouble() > .9d)
+                    pockets.Add(p);
+                    for (int x = -1; x < 3; x++)
                     {
-                        pockets.Add(p);
-                        for (int x = -1; x < 2; x++)
+                        for (int y = -1; y < 3; y++)
                         {
-                            for (int y = -1; y < 2; y++)
-                            {
-                                Point removePoint = p + Point.Get(x, y);
-                                if (!board.PieceGrid.IsOutOfBounds(removePoint))
-                                    twoByTwos.Remove(removePoint);
-                            }
+                            Point removePoint = p + Point.Get(x, y);
+                            if (!board.PieceGrid.IsOutOfBounds(removePoint))
+                                twoByTwos.Remove(removePoint);
+                            if (x == -1 || y == -1 || x == 2 || y == 2) fill.Add(removePoint);
                         }
-                        break;
                     }
+                    break;
                 }
             }
 
             Board winningBoard = board.Clone();
             Owner owner = PlayingAs;
+
+            foreach(Point p in winningBoard.PieceGrid.Amazon1Points.Union(winningBoard.PieceGrid.Amazon2Points))
+            {
+                winningBoard.PieceGrid.PointPieces[p] = Piece.Get(PieceName.Open);
+            }
+            winningBoard.PieceGrid.Amazon1Points.Clear();
+            winningBoard.PieceGrid.Amazon2Points.Clear();
+
             foreach (Point p in pockets)
             {
                 List<int> a = new List<int> { rnd.Next(), rnd.Next(), rnd.Next(), rnd.Next() };
@@ -190,28 +204,67 @@ namespace AmazonsGameLib
                 {
                     case 0:
                         winningBoard.PieceGrid.PointPieces[p] = Piece.Get(PieceName.Amazon, owner);
+                        if (owner == Owner.Player1) winningBoard.PieceGrid.Amazon1Points.Add(p);
+                        else winningBoard.PieceGrid.Amazon2Points.Add(p);
                         break;
                     case 1:
                         winningBoard.PieceGrid.PointPieces[p + Point.Get(1, 0)] = Piece.Get(PieceName.Amazon, owner);
+                        if (owner == Owner.Player1) winningBoard.PieceGrid.Amazon1Points.Add(p + Point.Get(1, 0));
+                        else winningBoard.PieceGrid.Amazon2Points.Add(p + Point.Get(1, 0));
                         break;
                     case 2:
                         winningBoard.PieceGrid.PointPieces[p + Point.Get(0, 1)] = Piece.Get(PieceName.Amazon, owner);
+                        if (owner == Owner.Player1) winningBoard.PieceGrid.Amazon1Points.Add(p + Point.Get(0, 1));
+                        else winningBoard.PieceGrid.Amazon2Points.Add(p + Point.Get(0, 1));
                         break;
                     case 3:
                         winningBoard.PieceGrid.PointPieces[p + Point.Get(1, 1)] = Piece.Get(PieceName.Amazon, owner);
+                        if (owner == Owner.Player1) winningBoard.PieceGrid.Amazon1Points.Add(p + Point.Get(1, 1));
+                        else winningBoard.PieceGrid.Amazon2Points.Add(p + Point.Get(1, 1));
                         break;
                 }
 
-
-                Owner arrowOwner = board.CurrentPlayer;
-                arrowOwner = arrowOwner == Owner.Player1 ? Owner.Player2 : Owner.Player1;
-                               
-
                 owner = owner == Owner.Player1 ? Owner.Player2 : Owner.Player1;
             }
+            
 
+            Owner arrowOwner = winningBoard.CurrentPlayer;
+            fill.Shuffle(rnd);
+            foreach(Point p in fill)
+            {
+                if (winningBoard.PieceGrid.IsOutOfBounds(p) || winningBoard.PieceGrid.PointPieces[p].Impassible) continue;
+                winningBoard.PieceGrid.PointPieces[p] = Piece.Get(PieceName.Arrow, arrowOwner);
+                arrowOwner = arrowOwner == Owner.Player1 ? Owner.Player2 : Owner.Player1;
+            }
 
-            throw new NotImplementedException();
+            analysis.BuildAnalysis(winningBoard.PieceGrid, winningBoard.CurrentPlayer);
+            IEnumerable<Point> unreachablePoints = analysis.LocalAdvantages.Where(la => la.Value != null && !la.Value.Player1Reachable && !la.Value.Player2Reachable).Select(la => la.Key);
+            IEnumerable<Point> player1Points = analysis.LocalAdvantages.Where(la => la.Value != null && la.Value.Player1Reachable && !la.Value.Player2Reachable).Select(la => la.Key);
+            IEnumerable<Point> player2Points = analysis.LocalAdvantages.Where(la => la.Value != null && !la.Value.Player1Reachable && la.Value.Player2Reachable).Select(la => la.Key);
+
+            if (analysis.W != 0) throw new Exception("Not in the filling phase!");
+            double player1Advantage = analysis.T + analysis.M;
+            if(player1Advantage >= 0 && PlayingAs == Owner.Player2)
+            {
+                // add in some player1 arrows
+                
+                for (int i=0; i < Math.Abs(player1Advantage) + 1; i++)
+                {
+                    winningBoard.PieceGrid.PointPieces[player1Points.Skip(i).First()] = Piece.Get(PieceName.Arrow, Owner.Player1);
+                    winningBoard.PieceGrid.PointPieces[unreachablePoints.Skip(i).First()] = Piece.Get(PieceName.Arrow, Owner.Player2);
+                }
+            }
+            else if(player1Advantage <= 0 && PlayingAs == Owner.Player1)
+            {
+                // add in some player2 arrows
+                for (int i = 0; i < Math.Abs(player1Advantage) + 1; i++)
+                {
+                    winningBoard.PieceGrid.PointPieces[player2Points.Skip(i).First()] = Piece.Get(PieceName.Arrow, Owner.Player2);
+                    winningBoard.PieceGrid.PointPieces[unreachablePoints.Skip(i).First()] = Piece.Get(PieceName.Arrow, Owner.Player1);
+                }
+            }
+
+            return new Board(winningBoard.PieceGrid);
         }
 
         private string _name;

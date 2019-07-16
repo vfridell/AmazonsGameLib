@@ -65,6 +65,7 @@
     <Compile Include="Game.cs" />
     <Compile Include="IAnalysisResult.cs" />
     <Compile Include="IBoardAnalyzer.cs" />
+    <Compile Include="ListExtensions.cs" />
     <Compile Include="LocalAdvantage.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="NegamaxContext.cs" />

@@ -13,6 +13,7 @@
         <CommandBinding Command="Undo" CanExecute="UndoCommand_CanExecute" Executed="UndoCommand_Executed"/>
         <CommandBinding Command="Redo" CanExecute="RedoCommand_CanExecute" Executed="RedoCommand_Executed"/>
         <CommandBinding Command="Play"  CanExecute="PlayCommand_CanExecute" Executed="PlayCommand_Executed"/>
+        <CommandBinding Command="{x:Static local:MainWindow.ImagineCommand}"  CanExecute="ImagineCommand_CanExecute" Executed="ImagineCommand_Executed"/>
     </Window.CommandBindings>
     <DockPanel>
         <Menu Name="TopMenu" DockPanel.Dock="Top" >
@@ -21,6 +22,7 @@
                 <MenuItem Header="_Save" Command="Save"/>
                 <MenuItem Header="_Open" Command="Open"/>
                 <MenuItem Header="_Play" Command="Play"/>
+                <MenuItem Header="Imagine a Win"  Command="{x:Static local:MainWindow.ImagineCommand}"/>
                 <Separator/>
                 <MenuItem Header="_Undo" Command="Undo"/>
                 <MenuItem Header="_Redo" Command="Redo"/>

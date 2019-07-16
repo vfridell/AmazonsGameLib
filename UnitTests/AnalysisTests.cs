@@ -87,6 +87,22 @@ namespace UnitTests
             }
         }
 
+        [TestMethod]
+        public void ImagineManyWins()
+        {
+            Game game = new Game();
+            game.Begin(null, null, 10);
+            var analysis = new AnalysisGraph();
+            TacoCat tacoCat = new TacoCat(analysis);
+            tacoCat.BeginNewGame(Owner.Player1, game.BoardSize);
+            for (int i = 0; i < 100; i++)
+            {
+                Board win = tacoCat.ImagineWinningBoard(game.CurrentBoard);
+                analysis.BuildAnalysis(win.PieceGrid, Owner.Player1);
+                Assert.AreEqual(0, analysis.W);
+                Assert.IsTrue(analysis.T + analysis.M > 0);
+            }
+        }
 
         [TestMethod]
         public void AllSecondMoves()

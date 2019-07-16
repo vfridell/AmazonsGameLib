@@ -25,6 +25,7 @@ namespace GamePlayer
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static RoutedCommand ImagineCommand = new RoutedCommand();
 
         public Game Game { get; set; }
         public Stack<(Move, bool)> MoveHistoryStack = new Stack<(Move, bool)>();
@@ -177,5 +178,38 @@ namespace GamePlayer
             });
         }
 
+        private void ImagineCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Game != null && BoardControl != null;
+        }
+
+        private void ImagineCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            Cursor orgCursor = Cursor;
+            Cursor = Cursors.Wait;
+            BoardControl.SetReadOnlyTillNextDraw();
+
+            try
+            {
+                AnalysisGraph analysisGraph = new AnalysisGraph();
+                TacoCat tacoCat = new TacoCat(analysisGraph);
+                tacoCat.BeginNewGame(Game.CurrentPlayer, Game.BoardSize);
+                Board winningBoard = tacoCat.ImagineWinningBoard(Game.CurrentBoard);
+                if (winningBoard == null) return;
+
+                MainGrid.Children.Clear();
+                Game = new Game();
+                Game.Begin(null, null, winningBoard.Clone());
+                MoveHistoryStack.Clear();
+                BoardControl = new AmazonBoardControl(winningBoard.Clone(), false);
+                BoardControl.MoveUpdated += BoardControl_MoveUpdated;
+                MainGrid.Children.Add(BoardControl);
+                MainGrid.UpdateLayout();
+            }
+            finally
+            {
+                Cursor = orgCursor;
+            }
+        }
     }
 }

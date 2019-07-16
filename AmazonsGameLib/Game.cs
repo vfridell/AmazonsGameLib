@@ -38,6 +38,14 @@ namespace AmazonsGameLib
             CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
         }
 
+        public void Begin(Player player1, Player player2, Board board)
+        {
+            Player1 = player1;
+            Player2 = player2;
+            Boards.Add(board);
+            CurrentMoves = CurrentBoard.GetAvailableMovesForCurrentPlayer().ToList();
+        }
+
         public bool IsComplete() => !(CurrentMoves?.Any() ?? true );
 
         public void ApplyMove(Move move)
