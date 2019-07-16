@@ -25,6 +25,7 @@ namespace GamePlayer
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static RoutedCommand ReversePlayCommand = new RoutedCommand();
         public static RoutedCommand ImagineCommand = new RoutedCommand();
 
         public Game Game { get; set; }
@@ -210,6 +211,38 @@ namespace GamePlayer
             {
                 Cursor = orgCursor;
             }
+        }
+
+        private void ReversePlayCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Game != null && BoardControl != null;
+        }
+
+        private void ReversePlayCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            AnalysisGraph analysisGraph = new AnalysisGraph();
+            var tacoCat = new TacoCat(analysisGraph);
+            tacoCat.BeginNewGame(Game.CurrentBoard.PreviousPlayer, 10);
+            ComputerPlaying = Game.CurrentBoard.PreviousPlayer;
+
+            Cursor orgCursor = Cursor;
+            Cursor = Cursors.Wait;
+            BoardControl.SetReadOnlyTillNextDraw();
+            Task.Run(() =>
+            {
+                var cancellationTokenSrc = new CancellationTokenSource(9000);
+                var bestMoveTask = tacoCat.PickBestPreviousMoveAsync(Game.CurrentBoard, cancellationTokenSrc.Token);
+                return bestMoveTask.Result;
+            }).ContinueWith((t) =>
+            {
+                Move move = t.Result;
+                Dispatcher.Invoke(() =>
+                {
+                    BoardControl.ApplyMove(move, true);
+                    Cursor = orgCursor;
+                });
+
+            });
         }
     }
 }

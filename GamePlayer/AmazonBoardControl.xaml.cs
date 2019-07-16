@@ -45,7 +45,8 @@ namespace GamePlayer
 
         public void ApplyMove(Move move, bool reverse)
         {
-            Board.ApplyMove(move);
+            if(reverse) Board.ApplyReverseMove(move);
+            else Board.ApplyMove(move);
             MoveUpdated?.Invoke(move, reverse);
             BoardGrid.Children.Clear();
             BoardGrid.UpdateLayout();

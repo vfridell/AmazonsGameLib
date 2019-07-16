@@ -155,5 +155,12 @@ namespace AmazonsGameLib
             newBoard.ApplyMove(move);
             return newBoard;
         }
+
+        public static Board ComputePreviousBoard(Board board, Move move)
+        {
+            Board newBoard = board.Clone();
+            newBoard.ApplyReverseMove(move);
+            return newBoard;
+        }
     }
 }

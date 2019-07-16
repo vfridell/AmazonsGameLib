@@ -195,7 +195,8 @@ namespace AmazonsGameLib
         /// <summary>
         /// Get all the available reverse moves (remove arrow + move amazon) from the given amazon point
         /// </summary>
-        /// <param name="centerPoint">The point an amazon is on to reverse</param>
+        /// <param name="amazonPoint">The point an amazon is on to reverse</param>
+        /// <param name="owner">Only look at arrows that belong to this owner. If owner == None, look at all arrows</param>
         /// <returns>Set of available reverse moves</returns>
         public IEnumerable<Move> GetReverseMovesFromPoint(Point amazonPoint, Owner owner)
         {

@@ -29,40 +29,8 @@ namespace AmazonsGameLib
 
         public bool isPlayer1 { get { return PlayingAs == Owner.Player1; } }
 
-        public Move MakeBestMove(Game game)
+        public async Task<Move> PickBestPreviousMoveAsync(Board board, CancellationToken aiCancelToken)
         {
-            Board board = game.CurrentBoard;
-            Move move;
-            if (PlayingAs == board.CurrentPlayer)
-            {
-                move = PickBestMove(board);
-                game.ApplyMove(move);
-            }
-            else
-            {
-                throw new Exception("It is not my move :(");
-            }
-            return move;
-        }
-
-
-        public Move PickBestMove(Board board)
-        {
-            var cancelSource = new CancellationTokenSource();
-            var initialContext = new NegamaxContext(null, board, 0, false);
-            Move bestMove = NegamaxRoot(initialContext, MinValue, MaxValue, 3, isPlayer1 ? 1 : -1, cancelSource.Token).Result;
-            return bestMove;
-        }
-
-        public async Task<Move> PickBestMoveAsync(Board board, CancellationToken aiCancelToken)
-        {
-            // calc all the possible next boards
-            List<Board> nextBoards = new List<Board>();
-            foreach(var move in board.GetAvailableMovesForCurrentPlayer())
-            {
-                nextBoards.Add(Board.ComputeFutureBoard(board, move));
-            }
-
             var initialContext = new NegamaxContext(null, board, 0, false);
             Move bestMove = await NegamaxRoot(initialContext, MinValue, MaxValue, 3, isPlayer1 ? 1 : -1, aiCancelToken);
             return bestMove;
@@ -95,7 +63,7 @@ namespace AmazonsGameLib
 
         private async Task<double> Negamax(NegamaxContext context, double alpha, double beta, int depth, int color, CancellationToken aiCancelToken)
         {
-            if (depth == 0 || !context.Board.IsPlayable)
+            if (depth == 0 || context.Board.Player1MoveCount + context.Board.Player2MoveCount == 0)
             {
                 if(context.ScoreCalculated) return context.Score * color;
                 else
@@ -135,14 +103,14 @@ namespace AmazonsGameLib
         private IEnumerable<NegamaxContext> GetSortedMoves(Board board, int color, CancellationToken aiCancelToken)
         {
             var advantageBag = new ConcurrentBag<NegamaxContext>();
-            var allMoves = board.GetAvailableMovesForCurrentPlayer();
+            var allMoves = board.GetAvailableReverseMovesForPreviousPlayer();
             Parallel.ForEach(allMoves, (move, parallelLoopState) =>
             {
                 if (aiCancelToken.IsCancellationRequested) parallelLoopState.Break();
                 if (parallelLoopState.ShouldExitCurrentIteration) return;
-                var futureBoard = Board.ComputeFutureBoard(board, move);
-                double currentAdvantage = _analyzer.Analyze(futureBoard).player1Advantage;
-                advantageBag.Add(new NegamaxContext(move, futureBoard, currentAdvantage, true));
+                var pastBoard = Board.ComputePreviousBoard(board, move);
+                double currentAdvantage = _analyzer.Analyze(pastBoard).player1Advantage;
+                advantageBag.Add(new NegamaxContext(move, pastBoard, currentAdvantage, true));
             });
 
             IEnumerable<NegamaxContext> sortedContexts = color == 1 ? advantageBag.ToList().OrderByDescending(c => c.Score) : advantageBag.ToList().OrderBy(c => c.Score);
